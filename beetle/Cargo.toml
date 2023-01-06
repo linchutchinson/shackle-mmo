@@ -1,0 +1,9 @@
+[package]
+name = "beetle"
+description = "A Macroquad-Based Client for Shackle"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+macroquad = "0.3"
+legion = "0.4"
