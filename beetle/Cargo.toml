@@ -5,5 +5,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+common = { path = "../common" }
+
 macroquad = "0.3"
 legion = "0.4"
