@@ -6,7 +6,7 @@ use macroquad::{
 };
 
 use crate::{
-    ui::{add_ui_layout_systems, add_ui_rendering_systems, spawn_dynamic_text},
+    ui::{add_ui_layout_systems, add_ui_rendering_systems, spawner::spawn_dynamic_text},
     ClearColor, Schedules,
 };
 

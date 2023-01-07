@@ -4,10 +4,7 @@ mod ui;
 use std::collections::HashMap;
 
 use legion::{Resources, Schedule, World};
-use macroquad::{
-    prelude::{Color, RED},
-    window::clear_background,
-};
+use macroquad::prelude::{Color, RED};
 use main_menu::main_menu_schedules;
 
 pub struct Application {
