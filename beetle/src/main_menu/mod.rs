@@ -6,7 +6,11 @@ use macroquad::{
 };
 
 use crate::{
-    ui::{add_ui_layout_systems, add_ui_rendering_systems, spawner::spawn_dynamic_text},
+    ui::{
+        add_ui_layout_systems, add_ui_rendering_systems,
+        spawner::{spawn_dynamic_text, spawn_ui_container},
+        UIRoot, UISize,
+    },
     ClearColor, Schedules,
 };
 
@@ -38,7 +42,10 @@ fn set_bg_color(#[resource] color: &mut ClearColor) {
 fn spawn_main_menu(commands: &mut CommandBuffer) {
     println!("Spawning Main Menu Components...");
     let title_text = spawn_dynamic_text(commands, "Shackle MMO");
-    commands.add_component(title_text, Rect::new(0.0, 0.0, screen_width(), 256.0));
+    commands.add_component(title_text, UISize::Grow(1));
+
+    let root = spawn_ui_container(commands, crate::ui::Layout::Vertical, &[title_text]);
+    commands.add_component(root, UIRoot);
 }
 
 fn render_schedule() -> Schedule {

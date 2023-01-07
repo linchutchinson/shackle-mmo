@@ -1,4 +1,7 @@
-use std::ops::{Add, Mul};
+use std::{
+    fmt::{self, Display},
+    ops::{Add, Mul},
+};
 
 #[derive(Copy, Clone)]
 pub struct Vec2 {
@@ -28,6 +31,13 @@ impl Add for Vec2 {
     }
 }
 
+impl Display for Vec2 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
+}
+
+#[derive(Copy, Clone)]
 pub struct Rect {
     pub position: Vec2,
     pub size: Vec2,
