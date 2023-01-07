@@ -1,15 +1,11 @@
-use common::math::Rect;
 use legion::{system, systems::CommandBuffer, Schedule};
-use macroquad::{
-    prelude::DARKBLUE,
-    window::{clear_background, screen_width},
-};
+use macroquad::{prelude::DARKBLUE, window::clear_background};
 
 use crate::{
     ui::{
         add_ui_layout_systems, add_ui_rendering_systems,
-        spawner::{spawn_dynamic_text, spawn_ui_container},
-        UIRoot, UISize,
+        spawner::{spawn_dynamic_text, spawn_spacer, spawn_ui_container},
+        UIConstraint, UIRoot, UISize,
     },
     ClearColor, Schedules,
 };
@@ -43,8 +39,14 @@ fn spawn_main_menu(commands: &mut CommandBuffer) {
     println!("Spawning Main Menu Components...");
     let title_text = spawn_dynamic_text(commands, "Shackle MMO");
     commands.add_component(title_text, UISize::Grow(1));
+    commands.add_component(title_text, UIConstraint::width_constraint(512.0));
 
-    let root = spawn_ui_container(commands, crate::ui::Layout::Vertical, &[title_text]);
+    let spacer = spawn_spacer(commands);
+
+    let button_container = spawn_ui_container(commands, &[]);
+    commands.add_component(button_container, UISize::Grow(5));
+
+    let root = spawn_ui_container(commands, &[title_text, spacer, button_container]);
     commands.add_component(root, UIRoot);
 }
 

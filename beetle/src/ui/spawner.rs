@@ -1,7 +1,7 @@
 use common::math::Rect;
 use legion::{systems::CommandBuffer, Entity};
 
-use super::{text::DynamicText, Layout, UIContainer, UIRoot};
+use super::{container::UIContainer, text::DynamicText, UISize};
 
 /// Spawn a text object that grows or shrinks its font size to fit within a rect.
 /// Note that a Rect is added by default but you're expected to add your own,
@@ -14,18 +14,17 @@ pub fn spawn_dynamic_text(commands: &mut CommandBuffer, text: &str) -> Entity {
     ))
 }
 
-pub fn spawn_ui_container(
-    commands: &mut CommandBuffer,
-    layout: Layout,
-    children: &[Entity],
-) -> Entity {
+pub fn spawn_ui_container(commands: &mut CommandBuffer, children: &[Entity]) -> Entity {
     let children = children.into();
     let container = UIContainer {
-        layout,
         children,
         margin: 4.0,
         gap: 4.0,
     };
 
     commands.push((container,))
+}
+
+pub fn spawn_spacer(commands: &mut CommandBuffer) -> Entity {
+    commands.push((UISize::Constant(32.0),))
 }
