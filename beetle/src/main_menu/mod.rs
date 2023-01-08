@@ -8,7 +8,7 @@ use crate::{
         spawner::{spawn_button, spawn_dynamic_text, spawn_spacer, spawn_ui_container},
         UIConstraint, UIRoot, UISize,
     },
-    ClearColor, Schedules,
+    ClearColor, NextState, Schedules,
 };
 
 #[derive(Copy, Clone)]
@@ -41,11 +41,14 @@ pub fn main_menu_schedules() -> Schedules {
 }
 
 #[system]
-fn handle_main_menu_events(#[resource] handler: &mut MainMenuEventHandler) {
+fn handle_main_menu_events(
+    #[resource] handler: &mut MainMenuEventHandler,
+    #[resource] next_state: &mut NextState,
+) {
     let receiver = &handler.0;
     receiver.try_iter().for_each(|event| match event {
         MainMenuEvent::PlayButtonClicked => println!("Play Button Clicked"),
-        MainMenuEvent::QuitButtonClicked => println!("Quit Button Clicked"),
+        MainMenuEvent::QuitButtonClicked => next_state.0 = Some(crate::AppState::Quit),
     });
 }
 

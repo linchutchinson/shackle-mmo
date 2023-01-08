@@ -41,6 +41,10 @@ impl Application {
         let mut next_state = self.resources.get_mut::<NextState>().unwrap();
 
         if let Some(new_state) = next_state.0 {
+            if new_state == AppState::Quit {
+                self.is_running = false;
+                return;
+            }
             if new_state != self.current_state {
                 self.current_state = new_state;
                 next_state.0 = None;
@@ -82,6 +86,7 @@ impl Application {
 enum AppState {
     Startup,
     MainMenu,
+    Quit,
 }
 
 struct NextState(Option<AppState>);
