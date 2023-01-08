@@ -3,7 +3,9 @@ use legion::{system, systems::CommandBuffer};
 use crate::{
     main_menu::event::MainMenuEvent,
     ui::{
-        spawner::{spawn_button, spawn_dynamic_text, spawn_spacer, spawn_ui_container},
+        spawner::{
+            spawn_button, spawn_dynamic_text, spawn_spacer, spawn_text_input, spawn_ui_container,
+        },
         UIConstraint, UIRoot, UISize,
     },
 };
@@ -11,7 +13,7 @@ use crate::{
 use super::event::MainMenuEventHandler;
 
 pub fn spawn_login_menu(commands: &mut CommandBuffer, event_handler: &MainMenuEventHandler) {
-    println!("Spawning Login Menu Components...");
+    log::trace!("Spawning Login Menu Components...");
 
     let title_text = spawn_dynamic_text(commands, "Enter Your Name");
     commands.add_component(title_text, UISize::Grow(1));
@@ -23,11 +25,13 @@ pub fn spawn_login_menu(commands: &mut CommandBuffer, event_handler: &MainMenuEv
     let button_spacer_1 = spawn_spacer(commands);
     commands.add_component(button_spacer_1, UISize::Grow(1));
 
+    let username_input = spawn_text_input(commands);
+
     let login_button = spawn_button(
         commands,
         "Log In",
         event_handler.1.clone(),
-        MainMenuEvent::PlayButtonClicked,
+        MainMenuEvent::LoginButtonClicked(username_input),
     );
 
     let button_spacer_2 = spawn_spacer(commands);
@@ -46,7 +50,7 @@ pub fn spawn_main_menu(
     commands: &mut CommandBuffer,
     #[resource] event_handler: &MainMenuEventHandler,
 ) {
-    println!("Spawning Main Menu Components...");
+    log::trace!("Spawning Main Menu Components...");
 
     let title_text = spawn_dynamic_text(commands, "Shackle MMO");
     commands.add_component(title_text, UISize::Grow(1));

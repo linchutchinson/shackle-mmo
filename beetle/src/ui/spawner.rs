@@ -44,3 +44,7 @@ pub fn spawn_button<T: Send + Sync + Copy + 'static>(
         Button::new(sender, message),
     ))
 }
+
+pub fn spawn_text_input(commands: &mut CommandBuffer) -> Entity {
+    spawn_spacer(commands)
+}

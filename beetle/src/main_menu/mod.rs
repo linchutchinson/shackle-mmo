@@ -69,6 +69,9 @@ fn handle_main_menu_events(
         MainMenuEvent::QuitButtonClicked => {
             next_state.0 = Some(crate::AppState::Quit);
         }
+        MainMenuEvent::LoginButtonClicked(input_entity) => {
+            unimplemented!()
+        }
     });
 }
 
