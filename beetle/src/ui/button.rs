@@ -40,7 +40,10 @@ pub fn handle_button_input<T: Send + Sync + Copy + 'static>(button: &mut Button<
             && is_mouse_button_pressed(macroquad::prelude::MouseButton::Left)
         {
             button.state = ButtonState::Click;
-            button.sender.send(button.event);
+            button
+                .sender
+                .send(button.event)
+                .expect("A button sent a message to a channel that is no longer connected!");
         } else if !is_mouse_button_down(macroquad::prelude::MouseButton::Left) {
             button.state = ButtonState::Hover;
         }
