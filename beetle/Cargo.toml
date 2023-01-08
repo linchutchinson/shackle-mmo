@@ -9,3 +9,4 @@ common = { path = "../common" }
 
 macroquad = "0.3"
 legion = "0.4"
+crossbeam-channel = "0.5"

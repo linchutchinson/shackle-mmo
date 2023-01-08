@@ -37,6 +37,12 @@ impl Display for Vec2 {
     }
 }
 
+impl From<(f32, f32)> for Vec2 {
+    fn from(item: (f32, f32)) -> Self {
+        Self::new(item.0, item.1)
+    }
+}
+
 #[derive(Copy, Clone)]
 pub struct Rect {
     pub position: Vec2,
@@ -53,5 +59,28 @@ impl Rect {
 
     pub fn center(&self) -> Vec2 {
         self.position + (self.size * 0.5)
+    }
+
+    pub fn contains(&self, point: Vec2) -> bool {
+        point.x >= self.left()
+            && point.x <= self.right()
+            && point.y >= self.top()
+            && point.y <= self.bottom()
+    }
+
+    pub fn left(&self) -> f32 {
+        self.position.x
+    }
+
+    pub fn right(&self) -> f32 {
+        self.position.x + self.size.x
+    }
+
+    pub fn top(&self) -> f32 {
+        self.position.y
+    }
+
+    pub fn bottom(&self) -> f32 {
+        self.position.y + self.size.y
     }
 }

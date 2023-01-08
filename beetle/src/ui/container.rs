@@ -13,6 +13,45 @@ pub struct UIContainer {
     pub gap: f32,
 }
 
+impl Default for UIContainer {
+    fn default() -> Self {
+        const DEFAULT_MARGIN: f32 = 4.0;
+        const DEFAULT_GAP: f32 = 4.0;
+        Self {
+            children: Vec::new(),
+            margin: DEFAULT_MARGIN,
+            gap: DEFAULT_GAP,
+        }
+    }
+}
+
+impl UIContainer {
+    pub fn with_margin(&self, margin: f32) -> Self {
+        Self {
+            children: self.children.clone(),
+            margin,
+            gap: self.gap,
+        }
+    }
+
+    pub fn with_children(&self, children: &[Entity]) -> Self {
+        Self {
+            children: children.into(),
+            margin: self.margin,
+            gap: self.gap,
+        }
+    }
+
+    pub fn spawn_entity(&self, commands: &mut CommandBuffer) -> Entity {
+        let container = Self {
+            children: self.children.clone(),
+            margin: self.margin,
+            gap: self.gap,
+        };
+        commands.push((container,))
+    }
+}
+
 #[derive(Copy, Clone)]
 pub enum UISize {
     Constant(f32),

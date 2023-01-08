@@ -1,7 +1,8 @@
 use common::math::Rect;
+use crossbeam_channel::Sender;
 use legion::{systems::CommandBuffer, Entity};
 
-use super::{container::UIContainer, text::DynamicText, UISize};
+use super::{button::Button, container::UIContainer, text::DynamicText, UIConstraint, UISize};
 
 /// Spawn a text object that grows or shrinks its font size to fit within a rect.
 /// Note that a Rect is added by default but you're expected to add your own,
@@ -9,22 +10,37 @@ use super::{container::UIContainer, text::DynamicText, UISize};
 /// as part of a Container.
 pub fn spawn_dynamic_text(commands: &mut CommandBuffer, text: &str) -> Entity {
     commands.push((
+        UISize::Grow(1),
         DynamicText(text.to_string()),
         Rect::new(100.0, 100.0, 100.0, 100.0),
     ))
 }
 
 pub fn spawn_ui_container(commands: &mut CommandBuffer, children: &[Entity]) -> Entity {
-    let children = children.into();
-    let container = UIContainer {
-        children,
-        margin: 4.0,
-        gap: 4.0,
-    };
+    let container = UIContainer::default().with_children(children);
 
-    commands.push((container,))
+    commands.push((container, UISize::Grow(1)))
 }
 
 pub fn spawn_spacer(commands: &mut CommandBuffer) -> Entity {
-    commands.push((UISize::Constant(32.0),))
+    commands.push((UISize::Grow(1),))
+}
+
+pub fn spawn_button<T: Send + Sync + Copy + 'static>(
+    commands: &mut CommandBuffer,
+    text: &str,
+    sender: Sender<T>,
+    message: T,
+) -> Entity {
+    let label = spawn_dynamic_text(commands, text);
+    let container = UIContainer::default()
+        .with_margin(32.0)
+        .with_children(&[label]);
+
+    commands.push((
+        container,
+        UISize::Grow(1),
+        UIConstraint::width_constraint(256.0),
+        Button::new(sender, message),
+    ))
 }
