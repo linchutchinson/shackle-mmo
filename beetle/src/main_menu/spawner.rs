@@ -37,8 +37,15 @@ pub fn spawn_login_menu(commands: &mut CommandBuffer, event_handler: &MainMenuEv
     let button_spacer_2 = spawn_spacer(commands);
     commands.add_component(button_spacer_2, UISize::Grow(3));
 
-    let button_container =
-        spawn_ui_container(commands, &[button_spacer_1, login_button, button_spacer_2]);
+    let button_container = spawn_ui_container(
+        commands,
+        &[
+            button_spacer_1,
+            username_input,
+            login_button,
+            button_spacer_2,
+        ],
+    );
     commands.add_component(button_container, UISize::Grow(5));
 
     let root = spawn_ui_container(commands, &[title_text, spacer, button_container]);

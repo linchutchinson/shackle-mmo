@@ -2,7 +2,12 @@ use common::math::Rect;
 use crossbeam_channel::Sender;
 use legion::{systems::CommandBuffer, Entity};
 
-use super::{button::Button, container::UIContainer, text::DynamicText, UIConstraint, UISize};
+use super::{
+    button::Button,
+    container::UIContainer,
+    text::{DynamicText, Text, TextInput},
+    UIConstraint, UISize,
+};
 
 /// Spawn a text object that grows or shrinks its font size to fit within a rect.
 /// Note that a Rect is added by default but you're expected to add your own,
@@ -46,5 +51,5 @@ pub fn spawn_button<T: Send + Sync + Copy + 'static>(
 }
 
 pub fn spawn_text_input(commands: &mut CommandBuffer) -> Entity {
-    spawn_spacer(commands)
+    commands.push((TextInput::new(), Text::empty(32.0), UISize::Grow(1)))
 }

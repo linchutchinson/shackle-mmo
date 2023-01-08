@@ -3,11 +3,14 @@ mod spawner;
 
 use common::math::Rect;
 use crossbeam_channel::unbounded;
-use legion::{system, systems::CommandBuffer, world::SubWorld, Entity, Query, Schedule};
+use legion::{
+    system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore, Query, Schedule,
+};
+use log::warn;
 use macroquad::{prelude::DARKBLUE, window::clear_background};
 
 use crate::{
-    ui::{add_ui_layout_systems, add_ui_rendering_systems},
+    ui::{add_ui_layout_systems, add_ui_rendering_systems, Text},
     ClearColor, NextState, Schedules,
 };
 
@@ -48,6 +51,7 @@ fn render_schedule() -> Schedule {
 }
 
 #[system]
+#[read_component(Text)]
 fn handle_main_menu_events(
     world: &mut SubWorld,
     query: &mut Query<(Entity, &Rect)>,
@@ -70,7 +74,15 @@ fn handle_main_menu_events(
             next_state.0 = Some(crate::AppState::Quit);
         }
         MainMenuEvent::LoginButtonClicked(input_entity) => {
-            unimplemented!()
+            let entry = world
+                .entry_ref(input_entity)
+                .expect("The login button was not connected to an existing entity.");
+
+            let text = entry
+                .get_component::<Text>()
+                .expect("The login button was connected to an entity without text.");
+
+            warn!("Logging in with username: {}", text.0);
         }
     });
 }
