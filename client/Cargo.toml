@@ -10,3 +10,4 @@ common = { path = "../common" }
 
 laminar = "0.5"
 crossbeam-channel = "0.5"
+log = "0.4"

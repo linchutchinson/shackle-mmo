@@ -20,7 +20,7 @@ impl ClientMessage {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ServerMessage {
     ConnectionAccepted,
     DisconnectClient(DisconnectReason),
@@ -36,7 +36,7 @@ impl ServerMessage {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 pub enum DisconnectReason {
     InvalidUsername,
 }

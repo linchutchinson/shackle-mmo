@@ -1,10 +1,10 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, time::Instant};
 
-use common::ClientMessage;
+use common::{ClientMessage, DisconnectReason, ServerMessage};
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
 
 pub struct Client {
-    connection: Option<Connection>,
+    connection: Option<(Connection, ConnectionStatus)>,
 }
 
 impl Client {
@@ -18,17 +18,36 @@ impl Client {
         }
 
         let conn = Connection::new().unwrap();
-        self.connection = Some(conn);
+        self.connection = Some((conn, ConnectionStatus::Connecting));
 
         let result = self
             .connection
             .as_mut()
             .unwrap()
+            .0
             .send_message(ClientMessage::Connect(username.to_string()));
 
         if result.is_err() {
             return Err(ClientError::NetworkError(result.unwrap_err()));
         }
+
+        Ok(())
+    }
+
+    pub fn receive_messages(&mut self) -> Result<(), ClientError> {
+        if self.connection.is_none() {
+            return Err(ClientError::NotConnected);
+        }
+
+        let conn = self.connection.as_mut().unwrap();
+        let messages = conn.0.receive_messages();
+
+        messages.iter().for_each(|msg| match msg {
+            ServerMessage::ConnectionAccepted => conn.1 = ConnectionStatus::Connected,
+            ServerMessage::DisconnectClient(reason) => {
+                conn.1 = ConnectionStatus::Failed(reason.clone())
+            }
+        });
 
         Ok(())
     }
@@ -38,17 +57,17 @@ impl Client {
 pub enum ClientError {
     DuplicateConnectionError,
     NetworkError(ErrorKind),
+    NotConnected,
 }
 
 enum ConnectionStatus {
     Connecting,
     Connected,
-    Failed(()),
+    Failed(DisconnectReason),
 }
 
 struct Connection {
     server_addr: SocketAddr,
-    status: ConnectionStatus,
     socket: Socket,
 }
 
@@ -62,7 +81,6 @@ impl Connection {
 
         Ok(Self {
             server_addr,
-            status: ConnectionStatus::Connecting,
             socket,
         })
     }
@@ -74,5 +92,29 @@ impl Connection {
         self.socket
             .send(Packet::reliable_unordered(self.server_addr, payload))?;
         Ok(())
+    }
+
+    fn receive_messages(&mut self) -> Vec<ServerMessage> {
+        let mut result = Vec::new();
+
+        self.socket.manual_poll(Instant::now());
+
+        while let Some(event) = self.socket.recv() {
+            match event {
+                SocketEvent::Packet(pck) => {
+                    let msg_result = ServerMessage::from_payload(pck.payload().into());
+
+                    if let Ok(msg) = msg_result {
+                        result.push(msg);
+                    } else {
+                        let err = msg_result.unwrap_err();
+                        log::error!("Received an invalid packet from the server. {err}");
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        result
     }
 }
