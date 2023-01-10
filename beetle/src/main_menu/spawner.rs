@@ -1,7 +1,7 @@
 use legion::{system, systems::CommandBuffer};
 
 use crate::{
-    main_menu::event::MainMenuEvent,
+    main_menu::event::{MainMenuEvent, NotificationDisplay},
     ui::{
         spawner::{
             spawn_button, spawn_dynamic_text, spawn_spacer, spawn_text_input, spawn_ui_container,
@@ -27,20 +27,28 @@ pub fn spawn_login_menu(commands: &mut CommandBuffer, event_handler: &MainMenuEv
 
     let username_input = spawn_text_input(commands);
 
+    let notification_display = spawn_dynamic_text(commands, "");
+    commands.add_component(
+        notification_display,
+        NotificationDisplay(event_handler.notification_receiver()),
+    );
+    commands.add_component(notification_display, UISize::Grow(1));
+
     let login_button = spawn_button(
         commands,
         "Log In",
-        event_handler.1.clone(),
+        event_handler.event_sender(),
         MainMenuEvent::LoginButtonClicked(username_input),
     );
 
     let button_spacer_2 = spawn_spacer(commands);
-    commands.add_component(button_spacer_2, UISize::Grow(3));
+    commands.add_component(button_spacer_2, UISize::Grow(5));
 
     let button_container = spawn_ui_container(
         commands,
         &[
             button_spacer_1,
+            notification_display,
             username_input,
             login_button,
             button_spacer_2,
@@ -72,14 +80,14 @@ pub fn spawn_main_menu(
     let play_button = spawn_button(
         commands,
         "Play",
-        event_handler.1.clone(),
+        event_handler.event_sender(),
         MainMenuEvent::PlayButtonClicked,
     );
 
     let quit_button = spawn_button(
         commands,
         "Quit",
-        event_handler.1.clone(),
+        event_handler.event_sender(),
         MainMenuEvent::QuitButtonClicked,
     );
 

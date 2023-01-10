@@ -9,7 +9,7 @@ use macroquad::{
     text::{draw_text, measure_text},
 };
 
-pub struct DynamicText(pub String);
+pub struct DynamicText;
 pub struct Text(pub String, pub f32);
 
 impl Text {
@@ -39,6 +39,7 @@ enum TextInputState {
 pub fn calculate_dynamic_font_size(
     entity: &Entity,
     dynamic_text: &DynamicText,
+    text: &mut Text,
     rect: &Rect,
     commands: &mut CommandBuffer,
 ) {
@@ -62,13 +63,9 @@ pub fn calculate_dynamic_font_size(
         }
     }
 
-    let font_size =
-        calculate_font_size_iter(&dynamic_text.0, rect, MIN_FONT_SIZE, MAX_FONT_SIZE) as f32;
+    let font_size = calculate_font_size_iter(&text.0, rect, MIN_FONT_SIZE, MAX_FONT_SIZE) as f32;
 
-    // FIXME This is a string copy every frame which I think may be unneccessarily heavy.
-    // There's probably some way to do this with a shared reference or only adjusting
-    // the font size. Maybe change detection on the rect too could work.
-    commands.add_component(*entity, Text(dynamic_text.0.clone(), font_size));
+    text.1 = font_size;
 }
 
 #[system(for_each)]

@@ -1,12 +1,11 @@
 mod event;
 mod spawner;
 
-use common::math::Rect;
-use crossbeam_channel::unbounded;
+use common::{math::Rect, validation::validate_username};
 use legion::{
     system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore, Query, Schedule,
 };
-use log::warn;
+use log::{error, warn};
 use macroquad::{prelude::DARKBLUE, window::clear_background};
 
 use crate::{
@@ -15,7 +14,7 @@ use crate::{
 };
 
 use self::{
-    event::{MainMenuEvent, MainMenuEventHandler},
+    event::{MainMenuEvent, MainMenuEventHandler, MainMenuNotification, NotificationDisplay},
     spawner::{spawn_login_menu, spawn_main_menu_system},
 };
 
@@ -30,6 +29,7 @@ pub fn main_menu_schedules() -> Schedules {
     add_ui_layout_systems::<MainMenuEvent>(&mut tick_schedule_builder);
     let tick_schedule = tick_schedule_builder
         .add_system(handle_main_menu_events_system())
+        .add_system(display_notifications_system())
         .build();
 
     let render_schedule = render_schedule();
@@ -50,6 +50,19 @@ fn render_schedule() -> Schedule {
     builder.build()
 }
 
+#[system(for_each)]
+fn display_notifications(notifications: &mut NotificationDisplay, text: &mut Text) {
+    notifications
+        .0
+        .try_iter()
+        .for_each(|notification| match notification {
+            MainMenuNotification::Error(msg) => {
+                println!("{}", msg);
+                text.0 = msg;
+            }
+        });
+}
+
 #[system]
 #[read_component(Text)]
 fn handle_main_menu_events(
@@ -59,7 +72,7 @@ fn handle_main_menu_events(
     #[resource] next_state: &mut NextState,
     commands: &mut CommandBuffer,
 ) {
-    let receiver = &handler.0;
+    let receiver = handler.event_receiver().clone();
     receiver.try_iter().for_each(|event| match event {
         MainMenuEvent::PlayButtonClicked => {
             // FIXME Currently this clears the current UI by removing everything with a Rect component. This seems prone to problems.
@@ -82,17 +95,25 @@ fn handle_main_menu_events(
                 .get_component::<Text>()
                 .expect("The login button was connected to an entity without text.");
 
-            warn!("Logging in with username: {}", text.0);
+            let validity_check = validate_username(&text.0);
+
+            if validity_check.is_ok() {
+                // Log In
+                warn!("Logging in with username: {}", text.0);
+            } else {
+                // Error Occurred...
+                let err_msg = format!("{}", validity_check.as_ref().unwrap_err());
+                error!("{}", validity_check.unwrap_err());
+                handler.send_notification(MainMenuNotification::Error(err_msg));
+            }
         }
     });
 }
 
 #[system]
 fn init_main_menu_resources(commands: &mut CommandBuffer) {
-    let (sender, receiver) = unbounded();
-
     commands.exec_mut(move |_, resources| {
-        let event_handler = MainMenuEventHandler(receiver.clone(), sender.clone());
+        let event_handler = MainMenuEventHandler::new();
         resources.insert(event_handler);
         resources.insert(ClearColor(DARKBLUE));
     });

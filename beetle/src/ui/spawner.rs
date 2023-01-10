@@ -16,7 +16,8 @@ use super::{
 pub fn spawn_dynamic_text(commands: &mut CommandBuffer, text: &str) -> Entity {
     commands.push((
         UISize::Grow(1),
-        DynamicText(text.to_string()),
+        DynamicText,
+        Text(text.to_string(), 0.0),
         Rect::new(100.0, 100.0, 100.0, 100.0),
     ))
 }
