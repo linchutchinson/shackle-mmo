@@ -1,3 +1,7 @@
+use log::info;
+
 fn main() {
-    println!("Hello, world!");
+    env_logger::init();
+    info!("Starting Server CLI");
+    server::server().unwrap();
 }

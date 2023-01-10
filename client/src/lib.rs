@@ -17,7 +17,7 @@ impl Client {
             return Err(ClientError::DuplicateConnectionError);
         }
 
-        let conn = Connection::new().unwrap();
+        let conn = Connection::new()?;
         self.connection = Some((conn, ConnectionStatus::Connecting));
 
         let result = self
@@ -60,6 +60,12 @@ pub enum ClientError {
     NotConnected,
 }
 
+impl From<ErrorKind> for ClientError {
+    fn from(source: ErrorKind) -> Self {
+        Self::NetworkError(source)
+    }
+}
+
 enum ConnectionStatus {
     Connecting,
     Connected,
@@ -91,6 +97,7 @@ impl Connection {
         let payload = message.to_payload();
         self.socket
             .send(Packet::reliable_unordered(self.server_addr, payload))?;
+        self.socket.manual_poll(Instant::now());
         Ok(())
     }
 
@@ -105,6 +112,7 @@ impl Connection {
                     let msg_result = ServerMessage::from_payload(pck.payload().into());
 
                     if let Ok(msg) = msg_result {
+                        println!("Received Message: {msg:?}");
                         result.push(msg);
                     } else {
                         let err = msg_result.unwrap_err();

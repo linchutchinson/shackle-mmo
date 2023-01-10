@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 pub mod math;
 pub mod validation;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ClientMessage {
     // The String is the desired Username
     Connect(String),

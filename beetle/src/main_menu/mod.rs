@@ -6,7 +6,7 @@ use common::{math::Rect, validation::validate_username};
 use legion::{
     system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore, Query, Schedule,
 };
-use log::{error, warn};
+use log::{error, info, warn};
 use macroquad::{prelude::DARKBLUE, window::clear_background};
 
 use crate::{
@@ -71,6 +71,7 @@ fn handle_main_menu_events(
     query: &mut Query<(Entity, &Rect)>,
     #[resource] handler: &mut MainMenuEventHandler,
     #[resource] next_state: &mut NextState,
+    #[resource] client: &mut Client,
     commands: &mut CommandBuffer,
 ) {
     let receiver = handler.event_receiver().clone();
@@ -100,14 +101,14 @@ fn handle_main_menu_events(
 
             if validity_check.is_ok() {
                 // Log In
-                warn!("Logging in with username: {}", text.0);
-                let username = text.0.clone();
-
-                commands.exec_mut(move |_, resources| {
-                    let mut client = Client::new();
-                    client.connect(&username).unwrap();
-                    resources.insert(client);
-                });
+                info!("Logging in with username: {}", text.0);
+                let connection_result = client.connect(&text.0);
+                if connection_result.is_err() {
+                    let err = connection_result.unwrap_err();
+                    // TODO: This should use display for user facing formatting instead of debug.
+                    let err_msg = format!("{:?}", err);
+                    handler.send_notification(MainMenuNotification::Error(err_msg));
+                }
             } else {
                 // Error Occurred...
                 let err_msg = format!("{}", validity_check.as_ref().unwrap_err());
@@ -124,6 +125,7 @@ fn init_main_menu_resources(commands: &mut CommandBuffer) {
         let event_handler = MainMenuEventHandler::new();
         resources.insert(event_handler);
         resources.insert(ClearColor(DARKBLUE));
+        resources.insert(Client::new());
     });
 }
 
