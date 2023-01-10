@@ -1,11 +1,16 @@
 mod main_menu;
+mod overworld;
 mod ui;
 
 use std::collections::HashMap;
 
-use legion::{Resources, Schedule, World};
-use macroquad::prelude::{Color, RED};
+use legion::{system, Resources, Schedule, World};
+use macroquad::{
+    prelude::{Color, RED},
+    window::clear_background,
+};
 use main_menu::main_menu_schedules;
+use overworld::overworld_schedules;
 
 pub const TICKS_PER_SECOND: usize = 60;
 pub const SECS_PER_TICK: f32 = 1.0 / TICKS_PER_SECOND as f32;
@@ -28,6 +33,7 @@ impl Application {
         let current_state = AppState::Startup;
         let mut states = HashMap::new();
         states.insert(AppState::MainMenu, main_menu_schedules());
+        states.insert(AppState::Overworld, overworld_schedules());
         Self {
             is_running: true,
             world,
@@ -103,3 +109,8 @@ pub struct Schedules {
 }
 
 struct ClearColor(Color);
+
+#[system]
+fn draw_clear_color(#[resource] clear_color: &ClearColor) {
+    clear_background(clear_color.0);
+}

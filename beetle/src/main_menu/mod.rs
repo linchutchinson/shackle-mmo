@@ -4,12 +4,16 @@ mod spawner;
 use client::{Client, ConnectionStatus};
 use common::validation::validate_username;
 use legion::{
-    system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore, Query, Schedule,
+    system,
+    systems::CommandBuffer,
+    world::{self, SubWorld},
+    Entity, EntityStore, Query, Schedule,
 };
 use log::{error, info};
 use macroquad::{prelude::DARKBLUE, window::clear_background};
 
 use crate::{
+    draw_clear_color_system,
     ui::{add_ui_layout_systems, add_ui_rendering_systems, Text},
     ClearColor, NextState, Schedules,
 };
@@ -45,7 +49,7 @@ pub fn main_menu_schedules() -> Schedules {
 
 fn render_schedule() -> Schedule {
     let mut builder = Schedule::builder();
-    builder.add_thread_local(draw_main_menu_system());
+    builder.add_thread_local(draw_clear_color_system());
 
     add_ui_rendering_systems::<MainMenuEvent>(&mut builder);
 
@@ -140,14 +144,12 @@ fn init_main_menu_resources(commands: &mut CommandBuffer) {
 }
 
 #[system]
-fn draw_main_menu(#[resource] clear_color: &ClearColor) {
-    clear_background(clear_color.0);
-}
-
-#[system]
 fn join_server_when_connected(
+    query: &mut Query<Entity>,
+    world: &mut SubWorld,
     #[resource] client: &mut Client,
     #[resource] next_state: &mut NextState,
+    commands: &mut CommandBuffer,
 ) {
     // We don't care at this point whether or not the client is connected.
     // So this result can safely be ignored.
@@ -155,6 +157,11 @@ fn join_server_when_connected(
 
     match client.connection_status() {
         ConnectionStatus::Connected => {
+            // FIXME: Clearing all entities here is a weird temporary measure.
+            query.iter(world).for_each(|e| {
+                commands.remove(*e);
+            });
+
             next_state.0 = Some(crate::AppState::Overworld);
         }
         _ => {}
