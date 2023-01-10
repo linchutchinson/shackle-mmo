@@ -1,5 +1,5 @@
 use common::math::Rect;
-use legion::{system, systems::CommandBuffer, Entity};
+use legion::system;
 use macroquad::{
     prelude::{
         get_char_pressed, is_key_down, is_key_pressed, is_mouse_button_pressed, mouse_position,
@@ -36,13 +36,7 @@ enum TextInputState {
 }
 
 #[system(for_each)]
-pub fn calculate_dynamic_font_size(
-    entity: &Entity,
-    dynamic_text: &DynamicText,
-    text: &mut Text,
-    rect: &Rect,
-    commands: &mut CommandBuffer,
-) {
+pub fn calculate_dynamic_font_size(_: &DynamicText, text: &mut Text, rect: &Rect) {
     const MIN_FONT_SIZE: u16 = 8;
     const MAX_FONT_SIZE: u16 = 256;
     fn calculate_font_size_iter(text: &str, rect: &Rect, min: u16, max: u16) -> u16 {

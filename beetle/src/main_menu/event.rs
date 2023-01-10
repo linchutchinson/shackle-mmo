@@ -38,7 +38,10 @@ impl MainMenuEventHandler {
     }
 
     pub fn send_notification(&self, notification: MainMenuNotification) {
-        self.notification_channel.0.send(notification);
+        self.notification_channel
+            .0
+            .send(notification)
+            .expect("This should send.");
     }
 
     pub fn notification_receiver(&self) -> Receiver<MainMenuNotification> {

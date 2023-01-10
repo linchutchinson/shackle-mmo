@@ -6,7 +6,7 @@ use common::{math::Rect, validation::validate_username};
 use legion::{
     system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore, Query, Schedule,
 };
-use log::{error, info, warn};
+use log::{error, info};
 use macroquad::{prelude::DARKBLUE, window::clear_background};
 
 use crate::{

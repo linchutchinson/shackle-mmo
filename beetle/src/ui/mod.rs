@@ -9,7 +9,7 @@ pub use text::Text;
 
 use common::math::Rect;
 use legion::{system, systems::Builder};
-use macroquad::{prelude::RED, shapes::draw_rectangle_lines};
+use macroquad::{prelude::Color, shapes::draw_rectangle};
 
 use self::{
     button::{draw_button_system, handle_button_input_system},
@@ -38,13 +38,16 @@ pub fn add_ui_layout_systems<T: Send + Sync + Copy + 'static>(builder: &mut Buil
 pub fn add_ui_rendering_systems<T: Send + Sync + Copy + 'static>(builder: &mut Builder) {
     builder
         .flush()
-        .add_thread_local(render_rect_outlines_system())
+        //.add_thread_local(render_rect_outlines_system())
+        .add_thread_local(render_rect_lightener_system())
         .add_thread_local(render_text_input_system())
         .add_thread_local(draw_button_system::<T>())
         .add_thread_local(render_text_system())
         .flush();
 }
 
+/*
+TODO: Make this a debug toggleable feature.
 #[system(for_each)]
 fn render_rect_outlines(rect: &Rect) {
     draw_rectangle_lines(
@@ -54,5 +57,20 @@ fn render_rect_outlines(rect: &Rect) {
         rect.size.y,
         2.0,
         RED,
+    );
+}
+*/
+
+struct UILayer;
+
+#[system(for_each)]
+fn render_rect_lightener(rect: &Rect, _: &UILayer) {
+    const PADDING: f32 = 8.0;
+    draw_rectangle(
+        rect.position.x - PADDING,
+        rect.position.y - PADDING,
+        rect.size.x + (PADDING * 2.0),
+        rect.size.y + (PADDING * 2.0),
+        Color::new(0.0, 0.0, 0.0, 0.2),
     );
 }

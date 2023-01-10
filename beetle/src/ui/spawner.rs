@@ -6,7 +6,7 @@ use super::{
     button::Button,
     container::UIContainer,
     text::{DynamicText, Text, TextInput},
-    UIConstraint, UISize,
+    UIConstraint, UILayer, UISize,
 };
 
 /// Spawn a text object that grows or shrinks its font size to fit within a rect.
@@ -26,6 +26,14 @@ pub fn spawn_ui_container(commands: &mut CommandBuffer, children: &[Entity]) -> 
     let container = UIContainer::default().with_children(children);
 
     commands.push((container, UISize::Grow(1)))
+}
+
+pub fn spawn_ui_panel(commands: &mut CommandBuffer, children: &[Entity]) -> Entity {
+    let container = spawn_ui_container(commands, children);
+
+    commands.add_component(container, UILayer);
+
+    container
 }
 
 pub fn spawn_spacer(commands: &mut CommandBuffer) -> Entity {

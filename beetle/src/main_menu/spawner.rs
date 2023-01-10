@@ -5,6 +5,7 @@ use crate::{
     ui::{
         spawner::{
             spawn_button, spawn_dynamic_text, spawn_spacer, spawn_text_input, spawn_ui_container,
+            spawn_ui_panel,
         },
         UIConstraint, UIRoot, UISize,
     },
@@ -25,8 +26,6 @@ pub fn spawn_login_menu(commands: &mut CommandBuffer, event_handler: &MainMenuEv
     let button_spacer_1 = spawn_spacer(commands);
     commands.add_component(button_spacer_1, UISize::Grow(1));
 
-    let username_input = spawn_text_input(commands);
-
     let notification_display = spawn_dynamic_text(commands, "");
     commands.add_component(
         notification_display,
@@ -34,12 +33,18 @@ pub fn spawn_login_menu(commands: &mut CommandBuffer, event_handler: &MainMenuEv
     );
     commands.add_component(notification_display, UISize::Grow(1));
 
+    let username_input = spawn_text_input(commands);
+
     let login_button = spawn_button(
         commands,
         "Log In",
         event_handler.event_sender(),
         MainMenuEvent::LoginButtonClicked(username_input),
     );
+
+    let input_panel = spawn_ui_panel(commands, &[username_input, login_button]);
+    commands.add_component(input_panel, UISize::Grow(2));
+    commands.add_component(input_panel, UIConstraint::width_constraint(600.0));
 
     let button_spacer_2 = spawn_spacer(commands);
     commands.add_component(button_spacer_2, UISize::Grow(5));
@@ -49,8 +54,7 @@ pub fn spawn_login_menu(commands: &mut CommandBuffer, event_handler: &MainMenuEv
         &[
             button_spacer_1,
             notification_display,
-            username_input,
-            login_button,
+            input_panel,
             button_spacer_2,
         ],
     );
@@ -91,13 +95,15 @@ pub fn spawn_main_menu(
         MainMenuEvent::QuitButtonClicked,
     );
 
+    let button_panel = spawn_ui_panel(commands, &[play_button, quit_button]);
+    commands.add_component(button_panel, UISize::Grow(2));
+    commands.add_component(button_panel, UIConstraint::width_constraint(600.0));
+
     let button_spacer_2 = spawn_spacer(commands);
     commands.add_component(button_spacer_2, UISize::Grow(3));
 
-    let button_container = spawn_ui_container(
-        commands,
-        &[button_spacer_1, play_button, quit_button, button_spacer_2],
-    );
+    let button_container =
+        spawn_ui_container(commands, &[button_spacer_1, button_panel, button_spacer_2]);
     commands.add_component(button_container, UISize::Grow(5));
 
     let root = spawn_ui_container(commands, &[title_text, spacer, button_container]);

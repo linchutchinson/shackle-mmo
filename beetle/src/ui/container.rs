@@ -41,15 +41,6 @@ impl UIContainer {
             gap: self.gap,
         }
     }
-
-    pub fn spawn_entity(&self, commands: &mut CommandBuffer) -> Entity {
-        let container = Self {
-            children: self.children.clone(),
-            margin: self.margin,
-            gap: self.gap,
-        };
-        commands.push((container,))
-    }
 }
 
 #[derive(Copy, Clone)]
