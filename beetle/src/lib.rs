@@ -89,6 +89,8 @@ impl Application {
 enum AppState {
     Startup,
     MainMenu,
+    Overworld,
+    //Battle,
     Quit,
 }
 

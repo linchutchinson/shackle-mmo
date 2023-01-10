@@ -91,7 +91,7 @@ struct Connection {
 impl Connection {
     fn new() -> Result<Self, ErrorKind> {
         // TODO Select a valid port to bind to in a more sophisticated way.
-        let socket = Socket::bind("127.0.0.1:12351")?;
+        let socket = Socket::bind_any()?;
 
         // FIXME This is not a real server address.
         let server_addr = "127.0.0.1:12352".parse().unwrap();

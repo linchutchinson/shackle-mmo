@@ -1,7 +1,7 @@
 mod event;
 mod spawner;
 
-use client::Client;
+use client::{Client, ConnectionStatus};
 use common::validation::validate_username;
 use legion::{
     system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore, Query, Schedule,
@@ -31,6 +31,7 @@ pub fn main_menu_schedules() -> Schedules {
     let tick_schedule = tick_schedule_builder
         .add_system(handle_main_menu_events_system())
         .add_system(display_notifications_system())
+        .add_system(join_server_when_connected_system())
         .build();
 
     let render_schedule = render_schedule();
@@ -141,4 +142,21 @@ fn init_main_menu_resources(commands: &mut CommandBuffer) {
 #[system]
 fn draw_main_menu(#[resource] clear_color: &ClearColor) {
     clear_background(clear_color.0);
+}
+
+#[system]
+fn join_server_when_connected(
+    #[resource] client: &mut Client,
+    #[resource] next_state: &mut NextState,
+) {
+    // We don't care at this point whether or not the client is connected.
+    // So this result can safely be ignored.
+    client.receive_messages().ok();
+
+    match client.connection_status() {
+        ConnectionStatus::Connected => {
+            next_state.0 = Some(crate::AppState::Overworld);
+        }
+        _ => {}
+    }
 }

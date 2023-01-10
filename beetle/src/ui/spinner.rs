@@ -1,9 +1,6 @@
 use common::math::Rect;
 use legion::system;
-use macroquad::{
-    prelude::{BLACK, ORANGE},
-    shapes::{draw_circle, draw_line},
-};
+use macroquad::{prelude::BLACK, shapes::draw_circle};
 
 use crate::TICKS_PER_SECOND;
 

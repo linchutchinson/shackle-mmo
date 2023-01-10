@@ -72,6 +72,7 @@ fn parse_incoming_packets(
                         // TODO: Also check for duplicates
                         let validation_result = validate_username(&username);
                         if let Ok(_) = validation_result {
+                            info!("Connection accepted!");
                             // Connect user successfully
                             clients.addr_map.insert(packet.addr(), username);
 
