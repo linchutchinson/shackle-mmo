@@ -7,7 +7,7 @@ use crate::{
             spawn_button, spawn_dynamic_text, spawn_spacer, spawn_text_input, spawn_ui_container,
             spawn_ui_panel,
         },
-        UIConstraint, UIRoot, UISize,
+        Spinner, UIConstraint, UIRoot, UISize,
     },
 };
 
@@ -104,6 +104,31 @@ pub fn spawn_main_menu(
 
     let button_container =
         spawn_ui_container(commands, &[button_spacer_1, button_panel, button_spacer_2]);
+    commands.add_component(button_container, UISize::Grow(5));
+
+    let root = spawn_ui_container(commands, &[title_text, spacer, button_container]);
+    commands.add_component(root, UIRoot);
+}
+
+pub fn spawn_connecting_screen(commands: &mut CommandBuffer) {
+    let title_text = spawn_dynamic_text(commands, "Connecting to Server...");
+    commands.add_component(title_text, UISize::Grow(1));
+    commands.add_component(title_text, UIConstraint::width_constraint(512.0));
+
+    let spacer = spawn_spacer(commands);
+    commands.add_component(spacer, UISize::Constant(32.0));
+
+    let content_spacer_1 = spawn_spacer(commands);
+    commands.add_component(content_spacer_1, UISize::Grow(1));
+
+    let spinner = spawn_spacer(commands);
+    commands.add_component(spinner, Spinner::new());
+
+    let content_spacer_2 = spawn_spacer(commands);
+    commands.add_component(content_spacer_2, UISize::Grow(3));
+
+    let button_container =
+        spawn_ui_container(commands, &[content_spacer_1, spinner, content_spacer_2]);
     commands.add_component(button_container, UISize::Grow(5));
 
     let root = spawn_ui_container(commands, &[title_text, spacer, button_container]);

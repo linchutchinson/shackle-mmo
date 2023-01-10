@@ -2,7 +2,7 @@ mod event;
 mod spawner;
 
 use client::Client;
-use common::{math::Rect, validation::validate_username};
+use common::validation::validate_username;
 use legion::{
     system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore, Query, Schedule,
 };
@@ -16,7 +16,7 @@ use crate::{
 
 use self::{
     event::{MainMenuEvent, MainMenuEventHandler, MainMenuNotification, NotificationDisplay},
-    spawner::{spawn_login_menu, spawn_main_menu_system},
+    spawner::{spawn_connecting_screen, spawn_login_menu, spawn_main_menu_system},
 };
 
 pub fn main_menu_schedules() -> Schedules {
@@ -68,7 +68,7 @@ fn display_notifications(notifications: &mut NotificationDisplay, text: &mut Tex
 #[read_component(Text)]
 fn handle_main_menu_events(
     world: &mut SubWorld,
-    query: &mut Query<(Entity, &Rect)>,
+    query: &mut Query<Entity>,
     #[resource] handler: &mut MainMenuEventHandler,
     #[resource] next_state: &mut NextState,
     #[resource] client: &mut Client,
@@ -77,10 +77,10 @@ fn handle_main_menu_events(
     let receiver = handler.event_receiver().clone();
     receiver.try_iter().for_each(|event| match event {
         MainMenuEvent::PlayButtonClicked => {
-            // FIXME Currently this clears the current UI by removing everything with a Rect component. This seems prone to problems.
+            // FIXME Currently this clears the current UI by removing everything. This seems prone to problems.
             // So I'm going to think about it, as there's probably a more appropriate solution. Having a tag component for current
             // UI elements feels clunky, but that may be due to the way I created the spawner code.
-            query.iter(world).for_each(|(e, _)| {
+            query.iter(world).for_each(|e| {
                 commands.remove(*e);
             });
             spawn_login_menu(commands, handler);
@@ -103,11 +103,20 @@ fn handle_main_menu_events(
                 // Log In
                 info!("Logging in with username: {}", text.0);
                 let connection_result = client.connect(&text.0);
-                if connection_result.is_err() {
-                    let err = connection_result.unwrap_err();
-                    // TODO: This should use display for user facing formatting instead of debug.
-                    let err_msg = format!("{:?}", err);
-                    handler.send_notification(MainMenuNotification::Error(err_msg));
+
+                match connection_result {
+                    Ok(()) => {
+                        query.iter(world).for_each(|e| {
+                            commands.remove(*e);
+                        });
+
+                        spawn_connecting_screen(commands);
+                    }
+                    Err(err) => {
+                        // TODO: This should use display for user facing formatting instead of debug.
+                        let err_msg = format!("{:?}", err);
+                        handler.send_notification(MainMenuNotification::Error(err_msg));
+                    }
                 }
             } else {
                 // Error Occurred...

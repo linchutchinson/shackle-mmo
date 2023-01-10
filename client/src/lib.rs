@@ -34,6 +34,15 @@ impl Client {
         Ok(())
     }
 
+    pub fn connection_status(&self) -> ConnectionStatus {
+        if self.connection.is_none() {
+            return ConnectionStatus::NotConnected;
+        } else {
+            let conn = self.connection.as_ref().unwrap();
+            return conn.1.clone();
+        }
+    }
+
     pub fn receive_messages(&mut self) -> Result<(), ClientError> {
         if self.connection.is_none() {
             return Err(ClientError::NotConnected);
@@ -66,7 +75,9 @@ impl From<ErrorKind> for ClientError {
     }
 }
 
-enum ConnectionStatus {
+#[derive(Clone)]
+pub enum ConnectionStatus {
+    NotConnected,
     Connecting,
     Connected,
     Failed(DisconnectReason),

@@ -1,10 +1,7 @@
 use std::time::Instant;
 
-use beetle::Application;
+use beetle::{Application, SECS_PER_TICK};
 use macroquad::window::next_frame;
-
-const TICKS_PER_SECOND: usize = 60;
-const SECS_PER_TICK: f32 = 1.0 / TICKS_PER_SECOND as f32;
 
 #[macroquad::main("Shackle MMO - Beetle V0.1")]
 async fn main() {

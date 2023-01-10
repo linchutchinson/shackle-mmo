@@ -7,6 +7,9 @@ use legion::{Resources, Schedule, World};
 use macroquad::prelude::{Color, RED};
 use main_menu::main_menu_schedules;
 
+pub const TICKS_PER_SECOND: usize = 60;
+pub const SECS_PER_TICK: f32 = 1.0 / TICKS_PER_SECOND as f32;
+
 pub struct Application {
     pub is_running: bool,
     world: World,
