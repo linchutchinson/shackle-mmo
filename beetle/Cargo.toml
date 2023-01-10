@@ -6,6 +6,7 @@ edition = "2021"
 
 [dependencies]
 common = { path = "../common" }
+client = { path = "../client" }
 
 macroquad = "0.3"
 legion = "0.4"

@@ -1,6 +1,7 @@
 mod event;
 mod spawner;
 
+use client::Client;
 use common::{math::Rect, validation::validate_username};
 use legion::{
     system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore, Query, Schedule,
@@ -100,6 +101,13 @@ fn handle_main_menu_events(
             if validity_check.is_ok() {
                 // Log In
                 warn!("Logging in with username: {}", text.0);
+                let username = text.0.clone();
+
+                commands.exec_mut(move |_, resources| {
+                    let mut client = Client::new();
+                    client.connect(&username).unwrap();
+                    resources.insert(client);
+                });
             } else {
                 // Error Occurred...
                 let err_msg = format!("{}", validity_check.as_ref().unwrap_err());

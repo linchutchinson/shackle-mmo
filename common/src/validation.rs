@@ -49,9 +49,10 @@ pub fn validate_username(name: &str) -> Result<(), ValidationError> {
 fn find_profanity(val: &str) -> Option<Vec<String>> {
     let prof_array: Vec<&str> = PROFANITY.split_whitespace().collect();
 
+    let lowercase_val = val.to_lowercase();
     let found_profanity: Vec<String> = prof_array
         .iter()
-        .filter(|profanity| val.find(*profanity).is_some())
+        .filter(|profanity| lowercase_val.find(*profanity).is_some())
         .map(|p| p.to_string())
         .collect();
 
@@ -119,5 +120,20 @@ mod tests {
             let result = validate_username(name);
             assert_eq!(result, expected, "{name} should be rejected for profanity.");
         });
+    }
+
+    #[test]
+    fn test_capitalized_profane_usernames() {
+        PROFANITY
+            .split_whitespace()
+            .map(|s| s.to_uppercase())
+            .for_each(|profanity| {
+                let expected = Err(ValidationError::ContainsProfanity(vec![profanity
+                    .to_lowercase()
+                    .to_string()]));
+                let name = &format!("AB{profanity}cd");
+                let result = validate_username(name);
+                assert_eq!(result, expected, "{name} should be rejected for profanity.");
+            });
     }
 }
