@@ -1,18 +1,24 @@
 use std::{net::SocketAddr, time::Instant};
 
-use common::{ClientMessage, DisconnectReason, ServerMessage};
+use common::{math::Vec2, ClientMessage, DisconnectReason, GameObject, NetworkID, ServerMessage};
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
 
 pub struct Client {
     connection: Option<(Connection, ConnectionStatus)>,
     username: Option<String>,
+    sender: Sender<ClientEvent>,
+    receiver: Receiver<ClientEvent>,
 }
 
 impl Client {
     pub fn new() -> Self {
+        let (sender, receiver) = unbounded();
         Self {
             connection: None,
             username: None,
+            sender,
+            receiver,
         }
     }
 
@@ -61,7 +67,25 @@ impl Client {
             ServerMessage::ConnectionAccepted => conn.1 = ConnectionStatus::Connected,
             ServerMessage::DisconnectClient(reason) => {
                 self.username = None;
-                conn.1 = ConnectionStatus::Failed(reason.clone())
+                conn.1 = ConnectionStatus::Failed(reason.clone());
+            }
+            ServerMessage::SpawnNetworkedEntity(id, entity_type) => {
+                self.sender
+                    .send(ClientEvent::SpawnEntity(*id, *entity_type))
+                    .expect("This should send.");
+            }
+            ServerMessage::RepositionNetworkedEntity(id, pos) => {
+                self.sender
+                    .send(ClientEvent::MoveEntity(*id, *pos))
+                    .expect("This should send.");
+            }
+            ServerMessage::SendMessage(author, text) => {
+                self.sender
+                    .send(ClientEvent::MessageReceived(
+                        author.to_string(),
+                        text.to_string(),
+                    ))
+                    .expect("This should send.");
             }
         });
 
@@ -73,6 +97,31 @@ impl Client {
             Some(s) => Some(s.as_ref()),
             None => None,
         }
+    }
+
+    pub fn get_event_receiver(&self) -> Receiver<ClientEvent> {
+        self.receiver.clone()
+    }
+
+    fn get_connection_mut(&mut self) -> Result<&mut Connection, ClientError> {
+        if self.connection.is_none() {
+            return Err(ClientError::NotConnected);
+        }
+
+        Ok(&mut self.connection.as_mut().unwrap().0)
+    }
+
+    pub fn move_player(&mut self, pos: Vec2) -> Result<(), ClientError> {
+        let conn = self.get_connection_mut()?;
+
+        conn.send_message(ClientMessage::MoveTo(pos))?;
+        Ok(())
+    }
+
+    pub fn request_id_archetype(&mut self, id: usize) -> Result<(), ClientError> {
+        let conn = self.get_connection_mut()?;
+        conn.send_message(ClientMessage::RequestArchetype(id))?;
+        Ok(())
     }
 }
 
@@ -117,11 +166,13 @@ impl Connection {
     }
 
     fn send_message(&mut self, message: ClientMessage) -> Result<(), ErrorKind> {
-        println!("It's not about the gameplay,");
-        println!("It's about sending a message.");
         let payload = message.to_payload();
-        self.socket
-            .send(Packet::reliable_unordered(self.server_addr, payload))?;
+        let msg_type = MessageType::from(message);
+        let packet = match msg_type {
+            MessageType::ReliableUnordered => Packet::reliable_unordered(self.server_addr, payload),
+            MessageType::Unreliable => Packet::unreliable(self.server_addr, payload),
+        };
+        self.socket.send(packet)?;
         self.socket.manual_poll(Instant::now());
         Ok(())
     }
@@ -137,7 +188,7 @@ impl Connection {
                     let msg_result = ServerMessage::from_payload(pck.payload().into());
 
                     if let Ok(msg) = msg_result {
-                        println!("Received Message: {msg:?}");
+                        log::info!("Received Message: {msg:?}");
                         result.push(msg);
                     } else {
                         let err = msg_result.unwrap_err();
@@ -149,5 +200,25 @@ impl Connection {
         }
 
         result
+    }
+}
+
+pub enum ClientEvent {
+    SpawnEntity(NetworkID, GameObject),
+    MoveEntity(NetworkID, Vec2),
+    MessageReceived(String, String),
+}
+
+enum MessageType {
+    Unreliable,
+    ReliableUnordered,
+}
+
+impl From<ClientMessage> for MessageType {
+    fn from(item: ClientMessage) -> Self {
+        match item {
+            ClientMessage::MoveTo(_) => Self::Unreliable,
+            _ => Self::ReliableUnordered,
+        }
     }
 }

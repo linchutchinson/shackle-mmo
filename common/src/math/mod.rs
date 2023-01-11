@@ -1,53 +1,6 @@
-use std::{
-    fmt::{self, Display},
-    ops::{Add, AddAssign, Mul},
-};
+mod vec2;
 
-#[derive(Copy, Clone)]
-pub struct Vec2 {
-    pub x: f32,
-    pub y: f32,
-}
-
-impl Vec2 {
-    pub fn new(x: f32, y: f32) -> Self {
-        Self { x, y }
-    }
-}
-
-impl Mul<f32> for Vec2 {
-    type Output = Self;
-
-    fn mul(self, rhs: f32) -> Self {
-        Self::new(self.x * rhs, self.y * rhs)
-    }
-}
-
-impl Add for Vec2 {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        Vec2::new(self.x + other.x, self.y + other.y)
-    }
-}
-
-impl AddAssign for Vec2 {
-    fn add_assign(&mut self, rhs: Self) {
-        *self = *self + rhs;
-    }
-}
-
-impl Display for Vec2 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {})", self.x, self.y)
-    }
-}
-
-impl From<(f32, f32)> for Vec2 {
-    fn from(item: (f32, f32)) -> Self {
-        Self::new(item.0, item.1)
-    }
-}
+pub use vec2::Vec2;
 
 #[derive(Copy, Clone)]
 pub struct Rect {

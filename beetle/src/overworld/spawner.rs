@@ -1,19 +1,21 @@
 use client::Client;
-use common::math::Vec2;
+use common::{math::Vec2, PLAY_AREA_SIZE};
 use crossbeam_channel::{unbounded, Sender};
-use legion::{system, systems::CommandBuffer};
+use legion::{system, systems::CommandBuffer, Entity};
+use macroquad::prelude::{GREEN, WHITE};
 
 use crate::ui::{
     spawner::{spawn_button, spawn_dynamic_text, spawn_spacer, spawn_ui_container},
     UIRoot, UISize,
 };
 
-use super::{player::Player, Position, TILE_SIZE};
+use super::{
+    player::{Controller, Player, WorldDisplay},
+    Position,
+};
 
 #[system]
 pub fn spawn_overworld_ui(#[resource] client: &Client, commands: &mut CommandBuffer) {
-    // TODO: I want to be able to access the user's chosen name from the client. To put in UI
-
     // FIXME: This is an obviously temporary measure. Replace with an actual event handler.
     let (s, _) = unbounded();
 
@@ -35,9 +37,19 @@ pub fn spawn_overworld_ui(#[resource] client: &Client, commands: &mut CommandBuf
 }
 
 #[system]
-pub fn spawn_overworld_entities(commands: &mut CommandBuffer) {
+pub fn spawn_overworld_entities(commands: &mut CommandBuffer) {}
+
+pub fn spawn_local_player(commands: &mut CommandBuffer) -> Entity {
+    let pos = PLAY_AREA_SIZE * 0.5;
     commands.push((
-        Position(Vec2::new(8.0 * TILE_SIZE, 8.0 * TILE_SIZE)),
+        Position(pos),
         Player,
-    ));
+        Controller,
+        WorldDisplay("@".to_string(), WHITE),
+    ))
+}
+
+pub fn spawn_remote_player(commands: &mut CommandBuffer) -> Entity {
+    let pos = PLAY_AREA_SIZE * 0.5;
+    commands.push((Position(pos), Player, WorldDisplay("@".to_string(), GREEN)))
 }
