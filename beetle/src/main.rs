@@ -1,9 +1,18 @@
 use std::time::Instant;
 
 use beetle::{Application, SECS_PER_TICK};
-use macroquad::window::next_frame;
+use macroquad::window::{next_frame, Conf};
 
-#[macroquad::main("Shackle MMO - Beetle V0.1")]
+fn window_conf() -> Conf {
+    Conf {
+        window_title: "Shackle MMO - Beetle V0.1".to_string(),
+        window_width: 1280,
+        window_height: 720,
+        ..Default::default()
+    }
+}
+
+#[macroquad::main(window_conf)]
 async fn main() {
     env_logger::init();
     let mut app = Application::new();

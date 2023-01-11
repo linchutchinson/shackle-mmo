@@ -8,7 +8,7 @@ use common::{math::Vec2, GameObject, NetworkID, PLAY_AREA_SIZE};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use legion::{system, systems::CommandBuffer, Entity, Schedule};
 use macroquad::{
-    prelude::{BLACK, DARKBLUE, DARKBROWN, DARKGRAY},
+    prelude::{Color, BLACK, DARKBLUE, DARKBROWN, DARKGRAY},
     shapes::draw_rectangle,
     text::draw_text,
     window::{screen_height, screen_width},
@@ -93,7 +93,13 @@ fn draw_play_area() {
 
     let tl = (Vec2::new(screen_width, screen_height) * 0.5) - PLAY_AREA_SIZE * 0.5;
 
-    draw_rectangle(tl.x, tl.y, PLAY_AREA_SIZE.x, PLAY_AREA_SIZE.y, DARKGRAY);
+    draw_rectangle(
+        tl.x,
+        tl.y,
+        PLAY_AREA_SIZE.x,
+        PLAY_AREA_SIZE.y,
+        Color::from_rgba(16, 16, 16, 255),
+    );
 }
 
 const MAX_DISPLAYED_MESSAGES: usize = 5;
@@ -158,7 +164,7 @@ fn handle_client_events(
                 if let Some(e) = networked_entities.0.get(&id) {
                     commands.add_component(*e, Position(pos));
                 } else {
-                    log::error!(
+                    log::info!(
                         "Did not have an entity to reposition. Requesting archetype from server..."
                     );
                     // FIXME: Do not pretend there are never network issues.
@@ -168,7 +174,7 @@ fn handle_client_events(
                 }
             }
             ClientEvent::MessageReceived(author, text) => {
-                log::error!("Received Message: {text} from {author}");
+                log::info!("Received Message: {text} from {author}");
                 chat_messages.add_message(&author, &text);
             }
         });

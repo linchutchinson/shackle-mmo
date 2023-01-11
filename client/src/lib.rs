@@ -160,10 +160,12 @@ struct Connection {
 impl Connection {
     fn new() -> Result<Self, ErrorKind> {
         // TODO Select a valid port to bind to in a more sophisticated way.
-        let socket = Socket::bind_any()?;
+        let socket = Socket::bind("0.0.0.0:0")?;
 
         // FIXME This is not a real server address.
-        let server_addr = "127.0.0.1:27008".parse().unwrap();
+        let addr_string = std::env::var("SHACKLE_SERVER").unwrap_or("5.78.56.23".to_string());
+        let server_addr = format!("{addr_string}:27008").parse().unwrap();
+        println!("{server_addr:?}");
 
         Ok(Self {
             server_addr,

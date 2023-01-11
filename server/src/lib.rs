@@ -207,6 +207,7 @@ fn parse_incoming_packets(
                     }
                     ClientMessage::SendMessage(msg) => {
                         if let Some(client_info) = clients.addr_map.get(&packet.addr()) {
+                            info!("CHAT - {}: {msg}", client_info.username.to_owned());
                             let msg =
                                 ServerMessage::SendMessage(client_info.username.to_owned(), msg);
                             clients.all_addresses().iter().for_each(|addr| {
