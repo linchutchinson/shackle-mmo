@@ -1,4 +1,5 @@
 use common::math::Rect;
+use crossbeam_channel::Sender;
 use legion::system;
 use macroquad::{
     prelude::{
@@ -18,6 +19,7 @@ impl Text {
     }
 }
 
+pub struct SubmitOnEnter(pub Sender<String>);
 pub struct TextInput {
     state: TextInputState,
 }
@@ -111,6 +113,30 @@ pub fn handle_text_input_input(
                 input.state = TextInputState::Normal;
             }
         }
+    }
+}
+
+#[system(for_each)]
+pub fn handle_text_input_submit_on_enter(
+    input: &TextInput,
+    submitter: &SubmitOnEnter,
+    text: &mut Text,
+) {
+    match input.state {
+        TextInputState::Focus => {
+            if is_key_pressed(macroquad::prelude::KeyCode::Enter) {
+                let result = submitter.0.send(text.0.clone());
+                text.0.clear();
+
+                if result.is_err() {
+                    log::error!(
+                        "There was an error submitting text from the selected input. {}",
+                        result.unwrap_err()
+                    );
+                }
+            }
+        }
+        _ => {}
     }
 }
 

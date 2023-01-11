@@ -5,6 +5,7 @@ use std::collections::{HashMap, VecDeque};
 
 use client::{Client, ClientEvent};
 use common::{math::Vec2, GameObject, NetworkID, PLAY_AREA_SIZE};
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use legion::{system, systems::CommandBuffer, Entity, Schedule};
 use macroquad::{
     prelude::{BLACK, DARKBLUE, DARKBROWN, DARKGRAY},
@@ -27,6 +28,8 @@ use self::{
     },
 };
 
+pub struct ChatMessageChannel(Sender<String>, Receiver<String>);
+
 pub fn overworld_schedules() -> Schedules {
     let enter_schedule = Schedule::builder()
         .add_system(initialize_overworld_resources_system())
@@ -39,7 +42,8 @@ pub fn overworld_schedules() -> Schedules {
     tick_sbuilder
         .add_system(handle_client_events_system())
         .flush()
-        .add_system(move_player_system());
+        .add_system(move_player_system())
+        .add_system(handle_sending_messages_system());
     add_ui_layout_systems::<()>(&mut tick_sbuilder);
     let tick_schedule = tick_sbuilder.build();
 
@@ -60,12 +64,25 @@ pub fn overworld_schedules() -> Schedules {
 }
 
 #[system]
+fn handle_sending_messages(
+    #[resource] client: &mut Client,
+    #[resource] message_stream: &ChatMessageChannel,
+) {
+    let r = message_stream.1.clone();
+    r.try_iter().for_each(|m| {
+        client
+            .send_chat_message(&m)
+            .expect("Just close your eyes and pretend it will always work out.");
+    });
+}
+
+#[system]
 fn draw_chatlog(#[resource] chatlog: &ChatMessages) {
     let screen_height = screen_height();
-    chatlog.0.iter().enumerate().for_each(|(idx, s)| {
+    chatlog.0.iter().rev().enumerate().for_each(|(idx, s)| {
         let y = screen_height - idx as f32 * 32.0 - 64.0;
 
-        draw_text(&s, 0.0, y, 24.0, BLACK);
+        draw_text(&s, 16.0, y, 24.0, BLACK);
     });
 }
 
@@ -79,7 +96,7 @@ fn draw_play_area() {
     draw_rectangle(tl.x, tl.y, PLAY_AREA_SIZE.x, PLAY_AREA_SIZE.y, DARKGRAY);
 }
 
-const MAX_DISPLAYED_MESSAGES: usize = 10;
+const MAX_DISPLAYED_MESSAGES: usize = 5;
 struct ChatMessages(VecDeque<String>);
 
 impl ChatMessages {
@@ -104,6 +121,9 @@ fn initialize_overworld_resources(commands: &mut CommandBuffer) {
         resources.insert(clear_color);
         resources.insert(NetworkedEntities(HashMap::new()));
         resources.insert(ChatMessages::new());
+
+        let (s, r) = unbounded();
+        resources.insert(ChatMessageChannel(s, r));
     });
 }
 

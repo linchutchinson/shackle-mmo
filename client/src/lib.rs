@@ -123,6 +123,12 @@ impl Client {
         conn.send_message(ClientMessage::RequestArchetype(id))?;
         Ok(())
     }
+
+    pub fn send_chat_message(&mut self, text: &str) -> Result<(), ClientError> {
+        let conn = self.get_connection_mut()?;
+        conn.send_message(ClientMessage::SendMessage(text.to_string()))?;
+        Ok(())
+    }
 }
 
 #[derive(Debug)]

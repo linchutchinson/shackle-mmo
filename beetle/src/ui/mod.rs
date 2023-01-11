@@ -7,12 +7,14 @@ pub mod spawner;
 
 pub use container::{UIConstraint, UIRoot, UISize};
 pub use spinner::Spinner;
+pub use text::SubmitOnEnter;
 pub use text::Text;
 
 use common::math::Rect;
 use legion::{system, systems::Builder};
 use macroquad::{prelude::Color, shapes::draw_rectangle};
 
+use self::text::handle_text_input_submit_on_enter_system;
 use self::{
     button::{draw_button_system, handle_button_input_system},
     container::{layout_ui_system, size_ui_root_system},
@@ -36,6 +38,7 @@ pub fn add_ui_layout_systems<T: Send + Sync + Copy + 'static>(builder: &mut Buil
         .add_system(handle_button_input_system::<T>())
         .add_system(calculate_dynamic_font_size_system())
         .add_system(rotate_spinner_system())
+        .add_system(handle_text_input_submit_on_enter_system())
         .flush();
 }
 
