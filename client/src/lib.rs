@@ -163,7 +163,7 @@ impl Connection {
         let socket = Socket::bind_any()?;
 
         // FIXME This is not a real server address.
-        let server_addr = "127.0.0.1:12352".parse().unwrap();
+        let server_addr = "127.0.0.1:27008".parse().unwrap();
 
         Ok(Self {
             server_addr,

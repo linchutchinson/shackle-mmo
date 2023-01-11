@@ -10,8 +10,8 @@ use legion::{system, systems::CommandBuffer, Resources, Schedule, World};
 use log::{error, info};
 
 pub fn server() -> Result<(), ErrorKind> {
-    let addr = "127.0.0.1:12352";
-    println!("Listening at port 12352");
+    let addr = "0.0.0.0:27008";
+    println!("Listening at port 27008");
     let mut socket = Socket::bind(addr)?;
 
     let (sender, receiver) = (socket.get_packet_sender(), socket.get_event_receiver());
