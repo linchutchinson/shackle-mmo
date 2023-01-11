@@ -1,5 +1,7 @@
+mod player;
 mod spawner;
 
+use common::math::Vec2;
 use legion::{system, systems::CommandBuffer, Schedule};
 use macroquad::prelude::DARKBROWN;
 
@@ -9,7 +11,12 @@ use crate::{
     ClearColor, Schedules,
 };
 
-use self::spawner::{spawn_overworld_entities_system, spawn_overworld_ui_system};
+use self::{
+    player::{draw_player_system, move_player_system},
+    spawner::{spawn_overworld_entities_system, spawn_overworld_ui_system},
+};
+
+const TILE_SIZE: f32 = 64.0;
 
 pub fn overworld_schedules() -> Schedules {
     let enter_schedule = Schedule::builder()
@@ -20,11 +27,14 @@ pub fn overworld_schedules() -> Schedules {
         .build();
 
     let mut tick_sbuilder = Schedule::builder();
+    tick_sbuilder.add_system(move_player_system());
     add_ui_layout_systems::<()>(&mut tick_sbuilder);
     let tick_schedule = tick_sbuilder.build();
 
     let mut render_sbuilder = Schedule::builder();
-    render_sbuilder.add_thread_local(draw_clear_color_system());
+    render_sbuilder
+        .add_thread_local(draw_clear_color_system())
+        .add_thread_local(draw_player_system());
     add_ui_rendering_systems::<()>(&mut render_sbuilder);
     let render_schedule = render_sbuilder.build();
 
@@ -42,3 +52,5 @@ fn initialize_overworld_resources(commands: &mut CommandBuffer) {
         resources.insert(clear_color);
     });
 }
+
+pub struct Position(Vec2);

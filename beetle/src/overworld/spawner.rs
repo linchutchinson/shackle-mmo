@@ -1,4 +1,5 @@
 use client::Client;
+use common::math::Vec2;
 use crossbeam_channel::{unbounded, Sender};
 use legion::{system, systems::CommandBuffer};
 
@@ -6,6 +7,8 @@ use crate::ui::{
     spawner::{spawn_button, spawn_dynamic_text, spawn_spacer, spawn_ui_container},
     UIRoot, UISize,
 };
+
+use super::{player::Player, Position, TILE_SIZE};
 
 #[system]
 pub fn spawn_overworld_ui(#[resource] client: &Client, commands: &mut CommandBuffer) {
@@ -20,10 +23,7 @@ pub fn spawn_overworld_ui(#[resource] client: &Client, commands: &mut CommandBuf
     let logout_button = spawn_button(commands, "Log Out", s, ());
 
     // FIXME: spawn_spacer should have ui in its function name like other ui spawning functions.
-    /*
     let spacer = spawn_spacer(commands);
-    */
-    let spacer = spawn_dynamic_text(commands, "Pretend there's a really cool game screen here.");
     commands.add_component(spacer, UISize::Grow(10));
 
     let root_container =
@@ -32,4 +32,9 @@ pub fn spawn_overworld_ui(#[resource] client: &Client, commands: &mut CommandBuf
 }
 
 #[system]
-pub fn spawn_overworld_entities() {}
+pub fn spawn_overworld_entities(commands: &mut CommandBuffer) {
+    commands.push((
+        Position(Vec2::new(8.0 * TILE_SIZE, 8.0 * TILE_SIZE)),
+        Player,
+    ));
+}

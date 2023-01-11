@@ -1,6 +1,6 @@
 use std::{
     fmt::{self, Display},
-    ops::{Add, Mul},
+    ops::{Add, AddAssign, Mul},
 };
 
 #[derive(Copy, Clone)]
@@ -28,6 +28,12 @@ impl Add for Vec2 {
 
     fn add(self, other: Self) -> Self {
         Vec2::new(self.x + other.x, self.y + other.y)
+    }
+}
+
+impl AddAssign for Vec2 {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
     }
 }
 
