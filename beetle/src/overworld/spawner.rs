@@ -17,7 +17,10 @@ pub fn spawn_overworld_ui(#[resource] client: &Client, commands: &mut CommandBuf
     // FIXME: This is an obviously temporary measure. Replace with an actual event handler.
     let (s, _) = unbounded();
 
-    let top_text = spawn_dynamic_text(commands, "Welcome to Shackle, [USERNAME HERE]");
+    let username = client
+        .get_username()
+        .expect("There should always be a username by this point.");
+    let top_text = spawn_dynamic_text(commands, &format!("Welcome to Shackle, {username}"));
     let button_spacer = spawn_spacer(commands);
     commands.add_component(button_spacer, UISize::Constant(32.0));
     let logout_button = spawn_button(commands, "Log Out", s, ());

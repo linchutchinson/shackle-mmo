@@ -5,11 +5,15 @@ use laminar::{ErrorKind, Packet, Socket, SocketEvent};
 
 pub struct Client {
     connection: Option<(Connection, ConnectionStatus)>,
+    username: Option<String>,
 }
 
 impl Client {
     pub fn new() -> Self {
-        Self { connection: None }
+        Self {
+            connection: None,
+            username: None,
+        }
     }
 
     pub fn connect(&mut self, username: &str) -> Result<(), ClientError> {
@@ -30,6 +34,8 @@ impl Client {
         if result.is_err() {
             return Err(ClientError::NetworkError(result.unwrap_err()));
         }
+
+        self.username = Some(username.to_string());
 
         Ok(())
     }
@@ -54,11 +60,19 @@ impl Client {
         messages.iter().for_each(|msg| match msg {
             ServerMessage::ConnectionAccepted => conn.1 = ConnectionStatus::Connected,
             ServerMessage::DisconnectClient(reason) => {
+                self.username = None;
                 conn.1 = ConnectionStatus::Failed(reason.clone())
             }
         });
 
         Ok(())
+    }
+
+    pub fn get_username(&self) -> Option<&str> {
+        match &self.username {
+            Some(s) => Some(s.as_ref()),
+            None => None,
+        }
     }
 }
 
