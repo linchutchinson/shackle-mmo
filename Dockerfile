@@ -14,4 +14,6 @@ EXPOSE 27008/udp
 
 RUN cargo install --path server-cli
 
+ENV RUST_LOG=INFO
+
 CMD ["server-cli"]
