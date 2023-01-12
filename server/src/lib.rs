@@ -114,7 +114,8 @@ fn parse_incoming_packets(
                                     // Spawn owned player
                                     let msg = ServerMessage::SpawnNetworkedEntity(
                                         player_id,
-                                        common::GameArchetype::ClientPlayer,
+                                        common::GameArchetype::Player,
+                                        true,
                                     );
                                     let msg_packet =
                                         Packet::reliable_unordered(*addr, msg.to_payload());
@@ -123,7 +124,8 @@ fn parse_incoming_packets(
                                     // Spawn remote player
                                     let msg = ServerMessage::SpawnNetworkedEntity(
                                         player_id,
-                                        common::GameArchetype::RemotePlayer,
+                                        common::GameArchetype::Player,
+                                        false,
                                     );
                                     let msg_packet =
                                         Packet::reliable_unordered(*addr, msg.to_payload());
@@ -133,7 +135,7 @@ fn parse_incoming_packets(
 
                             networked_entities
                                 .0
-                                .insert(player_id, GameArchetype::RemotePlayer);
+                                .insert(player_id, GameArchetype::Player);
 
                             let msg = ServerMessage::SendMessage("SERVER".to_string(), txt);
                             clients.all_addresses().iter().for_each(|addr| {
@@ -192,7 +194,8 @@ fn parse_incoming_packets(
                             {
                                 let msg = ServerMessage::SpawnNetworkedEntity(
                                     NetworkID::new(id),
-                                    common::GameArchetype::RemotePlayer,
+                                    common::GameArchetype::Player,
+                                    false,
                                 );
 
                                 let msg_packet =

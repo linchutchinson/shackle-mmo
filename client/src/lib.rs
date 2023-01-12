@@ -71,9 +71,9 @@ impl Client {
                 self.username = None;
                 conn.1 = ConnectionStatus::Failed(reason.clone());
             }
-            ServerMessage::SpawnNetworkedEntity(id, entity_type) => {
+            ServerMessage::SpawnNetworkedEntity(id, entity_type, is_owned) => {
                 self.sender
-                    .send(ClientEvent::SpawnEntity(*id, *entity_type))
+                    .send(ClientEvent::SpawnEntity(*id, *entity_type, *is_owned))
                     .expect("This should send.");
             }
             ServerMessage::RepositionNetworkedEntity(id, pos) => {
@@ -214,7 +214,7 @@ impl Connection {
 }
 
 pub enum ClientEvent {
-    SpawnEntity(NetworkID, GameArchetype),
+    SpawnEntity(NetworkID, GameArchetype, bool),
     MoveEntity(NetworkID, Vec2),
     MessageReceived(String, String),
 }

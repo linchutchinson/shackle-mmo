@@ -29,7 +29,7 @@ impl ClientMessage {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ServerMessage {
     ConnectionAccepted,
-    SpawnNetworkedEntity(NetworkID, GameArchetype),
+    SpawnNetworkedEntity(NetworkID, GameArchetype, bool),
     RepositionNetworkedEntity(NetworkID, Vec2),
     SendMessage(String, String),
     DisconnectClient(DisconnectReason),
@@ -67,6 +67,5 @@ impl From<NetworkID> for usize {
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 pub enum GameArchetype {
-    ClientPlayer,
-    RemotePlayer,
+    Player,
 }

@@ -148,14 +148,19 @@ fn handle_client_events(
         .get_event_receiver()
         .try_iter()
         .for_each(|event| match event {
-            ClientEvent::SpawnEntity(id, entity_type) => {
+            ClientEvent::SpawnEntity(id, entity_type, is_owned) => {
                 if let Some(existing) = networked_entities.0.get(&id) {
                     commands.remove(*existing);
                 }
 
                 let e = match entity_type {
-                    GameArchetype::ClientPlayer => spawn_local_player(commands),
-                    GameArchetype::RemotePlayer => spawn_remote_player(commands),
+                    GameArchetype::Player => {
+                        if is_owned {
+                            spawn_local_player(commands)
+                        } else {
+                            spawn_remote_player(commands)
+                        }
+                    }
                 };
 
                 networked_entities.0.insert(id, e);
