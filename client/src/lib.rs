@@ -1,6 +1,8 @@
 use std::{net::SocketAddr, time::Instant};
 
-use common::{math::Vec2, ClientMessage, DisconnectReason, GameObject, NetworkID, ServerMessage};
+use common::{
+    math::Vec2, ClientMessage, DisconnectReason, GameArchetype, NetworkID, ServerMessage,
+};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
 
@@ -212,7 +214,7 @@ impl Connection {
 }
 
 pub enum ClientEvent {
-    SpawnEntity(NetworkID, GameObject),
+    SpawnEntity(NetworkID, GameArchetype),
     MoveEntity(NetworkID, Vec2),
     MessageReceived(String, String),
 }

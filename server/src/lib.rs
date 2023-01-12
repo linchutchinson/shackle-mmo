@@ -1,12 +1,12 @@
 use std::{collections::HashMap, net::SocketAddr, thread, time::Duration};
 
 use common::{
-    validation::validate_username, ClientMessage, GameObject, NetworkID, ServerMessage,
+    validation::validate_username, ClientMessage, GameArchetype, NetworkID, ServerMessage,
     PLAY_AREA_SIZE,
 };
 use crossbeam_channel::{Receiver, Sender};
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
-use legion::{system, systems::CommandBuffer, Resources, Schedule, World};
+use legion::{system, Resources, Schedule, World};
 use log::{error, info};
 
 pub fn server() -> Result<(), ErrorKind> {
@@ -64,7 +64,7 @@ struct ClientInfo {
     player_id: NetworkID,
 }
 
-struct NetworkedEntities(HashMap<NetworkID, GameObject>);
+struct NetworkedEntities(HashMap<NetworkID, GameArchetype>);
 
 #[system]
 fn parse_incoming_packets(
@@ -73,7 +73,6 @@ fn parse_incoming_packets(
     #[resource] sender: &mut Sender<Packet>,
     #[resource] clients: &mut ClientList,
     #[resource] networked_entities: &mut NetworkedEntities,
-    commands: &mut CommandBuffer,
 ) {
     if let Ok(event) = receiver.try_recv() {
         match event {
@@ -115,7 +114,7 @@ fn parse_incoming_packets(
                                     // Spawn owned player
                                     let msg = ServerMessage::SpawnNetworkedEntity(
                                         player_id,
-                                        common::GameObject::ClientPlayer,
+                                        common::GameArchetype::ClientPlayer,
                                     );
                                     let msg_packet =
                                         Packet::reliable_unordered(*addr, msg.to_payload());
@@ -124,7 +123,7 @@ fn parse_incoming_packets(
                                     // Spawn remote player
                                     let msg = ServerMessage::SpawnNetworkedEntity(
                                         player_id,
-                                        common::GameObject::RemotePlayer,
+                                        common::GameArchetype::RemotePlayer,
                                     );
                                     let msg_packet =
                                         Packet::reliable_unordered(*addr, msg.to_payload());
@@ -134,7 +133,7 @@ fn parse_incoming_packets(
 
                             networked_entities
                                 .0
-                                .insert(player_id, GameObject::RemotePlayer);
+                                .insert(player_id, GameArchetype::RemotePlayer);
 
                             let msg = ServerMessage::SendMessage("SERVER".to_string(), txt);
                             clients.all_addresses().iter().for_each(|addr| {
@@ -189,10 +188,11 @@ fn parse_incoming_packets(
                     }
                     ClientMessage::RequestArchetype(id) => {
                         if let Some(_) = clients.addr_map.get(&packet.addr()) {
-                            if let Some(archetype) = networked_entities.0.get(&NetworkID::new(id)) {
+                            if let Some(_archetype) = networked_entities.0.get(&NetworkID::new(id))
+                            {
                                 let msg = ServerMessage::SpawnNetworkedEntity(
                                     NetworkID::new(id),
-                                    common::GameObject::RemotePlayer,
+                                    common::GameArchetype::RemotePlayer,
                                 );
 
                                 let msg_packet =
