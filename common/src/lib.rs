@@ -12,6 +12,7 @@ pub enum ClientMessage {
     Connect(String),
     MoveTo(Vec2),
     RequestArchetype(NetworkID),
+    RequestEntityInfo(NetworkID, InfoRequestType),
     SendMessage(String),
     Disconnect,
 }
@@ -27,10 +28,21 @@ impl ClientMessage {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub enum InfoRequestType {
+    Identity,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum InfoSendType {
+    Identity(String),
+    Position(Vec2),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ServerMessage {
     ConnectionAccepted,
     SpawnNetworkedEntity(NetworkID, GameArchetype, bool),
-    RepositionNetworkedEntity(NetworkID, Vec2),
+    SendNetworkedEntityInfo(NetworkID, InfoSendType),
     SendMessage(String, String),
     DisconnectClient(DisconnectReason),
 }

@@ -1,7 +1,8 @@
 use std::{net::SocketAddr, time::Instant};
 
 use common::{
-    math::Vec2, ClientMessage, DisconnectReason, GameArchetype, NetworkID, ServerMessage,
+    math::Vec2, ClientMessage, DisconnectReason, GameArchetype, InfoSendType, NetworkID,
+    ServerMessage,
 };
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
@@ -76,11 +77,16 @@ impl Client {
                     .send(ClientEvent::SpawnEntity(*id, *entity_type, *is_owned))
                     .expect("This should send.");
             }
-            ServerMessage::RepositionNetworkedEntity(id, pos) => {
-                self.sender
-                    .send(ClientEvent::MoveEntity(*id, *pos))
-                    .expect("This should send.");
-            }
+            ServerMessage::SendNetworkedEntityInfo(id, info) => match info {
+                InfoSendType::Position(pos) => {
+                    self.sender
+                        .send(ClientEvent::MoveEntity(*id, *pos))
+                        .expect("This should send.");
+                }
+                InfoSendType::Identity(name) => {
+                    unimplemented!()
+                }
+            },
             ServerMessage::SendMessage(author, text) => {
                 self.sender
                     .send(ClientEvent::MessageReceived(

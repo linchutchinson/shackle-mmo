@@ -1,13 +1,19 @@
+mod message_handling;
+
 use std::{collections::HashMap, net::SocketAddr, thread, time::Duration};
 
 use common::{
-    validation::validate_username, ClientMessage, GameArchetype, NetworkID, ServerMessage,
-    PLAY_AREA_SIZE,
+    ClientMessage, InfoRequestType, InfoSendType, NetworkID, ServerMessage, PLAY_AREA_SIZE,
 };
 use crossbeam_channel::{Receiver, Sender};
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
-use legion::{system, Resources, Schedule, World};
+use legion::{
+    system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore, Query, Resources,
+    Schedule, World,
+};
 use log::{error, info};
+
+use crate::message_handling::handle_connect_message;
 
 pub fn server() -> Result<(), ErrorKind> {
     let addr = "0.0.0.0:27008";
@@ -38,10 +44,12 @@ pub fn server() -> Result<(), ErrorKind> {
 fn build_schedule() -> Schedule {
     Schedule::builder()
         .add_system(parse_incoming_packets_system(0))
+        .flush()
+        .add_system(send_player_info_system())
         .build()
 }
 
-struct ClientList {
+pub struct ClientList {
     addr_map: HashMap<SocketAddr, ClientInfo>,
 }
 
@@ -64,7 +72,7 @@ struct ClientInfo {
     player_id: NetworkID,
 }
 
-struct NetworkedEntities(HashMap<NetworkID, GameArchetype>);
+pub struct NetworkedEntities(HashMap<NetworkID, Entity>);
 
 #[system]
 fn parse_incoming_packets(
@@ -73,8 +81,9 @@ fn parse_incoming_packets(
     #[resource] sender: &mut Sender<Packet>,
     #[resource] clients: &mut ClientList,
     #[resource] networked_entities: &mut NetworkedEntities,
+    commands: &mut CommandBuffer,
 ) {
-    if let Ok(event) = receiver.try_recv() {
+    receiver.try_iter().for_each(|event|  {
         match event {
             SocketEvent::Packet(packet) => {
                 let msg = ClientMessage::from_payload(packet.payload());
@@ -85,74 +94,15 @@ fn parse_incoming_packets(
 
                 match msg.unwrap() {
                     ClientMessage::Connect(username) => {
-                        info!("{username} is attempting to connect...");
-
-                        // TODO: Also check for duplicates
-                        let validation_result = validate_username(&username);
-                        if let Ok(_) = validation_result {
-                            info!("Connection accepted!");
-                            let txt = format!("{username} has connected");
-
-                            // Connect user successfully
-                            let player_id = NetworkID::new(*next_id);
-                            *next_id += 1;
-                            clients.addr_map.insert(
-                                packet.addr(),
-                                ClientInfo {
-                                    username,
-                                    player_id,
-                                },
-                            );
-
-                            let msg = ServerMessage::ConnectionAccepted;
-                            let addr = packet.addr();
-                            let msg_packet = Packet::reliable_unordered(addr, msg.to_payload());
-                            sender.send(msg_packet).expect("This should send.");
-
-                            clients.all_addresses().iter().for_each(|addr| {
-                                if *addr == packet.addr() {
-                                    // Spawn owned player
-                                    let msg = ServerMessage::SpawnNetworkedEntity(
-                                        player_id,
-                                        common::GameArchetype::Player,
-                                        true,
-                                    );
-                                    let msg_packet =
-                                        Packet::reliable_unordered(*addr, msg.to_payload());
-                                    sender.send(msg_packet).expect("This should send.");
-                                } else {
-                                    // Spawn remote player
-                                    let msg = ServerMessage::SpawnNetworkedEntity(
-                                        player_id,
-                                        common::GameArchetype::Player,
-                                        false,
-                                    );
-                                    let msg_packet =
-                                        Packet::reliable_unordered(*addr, msg.to_payload());
-                                    sender.send(msg_packet).expect("This should send.");
-                                }
-                            });
-
-                            networked_entities
-                                .0
-                                .insert(player_id, GameArchetype::Player);
-
-                            let msg = ServerMessage::SendMessage("SERVER".to_string(), txt);
-                            clients.all_addresses().iter().for_each(|addr| {
-                                let msg_packet = Packet::unreliable(*addr, msg.to_payload());
-                                sender.send(msg_packet).expect("This should send.");
-                            });
-                        } else {
-                            // Disallowed username. Send a rejection message.
-                            info!("Rejecting Invalid Username");
-
-                            let msg = ServerMessage::DisconnectClient(
-                                common::DisconnectReason::InvalidUsername,
-                            );
-                            let addr = packet.addr();
-                            let msg_packet = Packet::reliable_unordered(addr, msg.to_payload());
-                            sender.send(msg_packet).expect("This should send.");
-                        }
+                        handle_connect_message(
+                            &username,
+                            next_id,
+                            clients,
+                            &packet,
+                            sender,
+                            networked_entities,
+                            commands,
+                        );
                     }
                     ClientMessage::MoveTo(pos) => {
                         if let Some(client_info) = clients.addr_map.get(&packet.addr()) {
@@ -160,9 +110,9 @@ fn parse_incoming_packets(
                             clamped_pos.x = clamped_pos.x.clamp(0.0, PLAY_AREA_SIZE.x);
                             clamped_pos.y = clamped_pos.y.clamp(0.0, PLAY_AREA_SIZE.y);
 
-                            let msg = ServerMessage::RepositionNetworkedEntity(
+                            let msg = ServerMessage::SendNetworkedEntityInfo(
                                 client_info.player_id,
-                                clamped_pos,
+                                InfoSendType::Position(clamped_pos),
                             );
                             clients
                                 .all_addresses()
@@ -190,10 +140,9 @@ fn parse_incoming_packets(
                     }
                     ClientMessage::RequestArchetype(id) => {
                         if let Some(_) = clients.addr_map.get(&packet.addr()) {
-                            if let Some(_archetype) = networked_entities.0.get(&NetworkID::new(id))
-                            {
+                            if let Some(_archetype) = networked_entities.0.get(&id) {
                                 let msg = ServerMessage::SpawnNetworkedEntity(
-                                    NetworkID::new(id),
+                                    id,
                                     common::GameArchetype::Player,
                                     false,
                                 );
@@ -202,7 +151,7 @@ fn parse_incoming_packets(
                                     Packet::unreliable(packet.addr(), msg.to_payload());
                                 sender.send(msg_packet).expect("This should send.");
                             } else {
-                                error!("Requested an entity ID that doesn't exist. {id}");
+                                error!("Requested an entity ID that doesn't exist. {id:?}");
                             }
                         } else {
                             error!("Someone attempted to send a move packet without having properly connected...");
@@ -221,9 +170,59 @@ fn parse_incoming_packets(
                             error!("Someone attempted to send a message packet without having properly connected...");
                         }
                     }
+                    ClientMessage::RequestEntityInfo(id, info) => {
+                        if let Some(_) = clients.addr_map.get(&packet.addr()) {
+                            if let Some(_) = networked_entities.0.get(&id) {
+                                commands.push((SendInfoRequest(id, packet.addr(), info),));
+                            } else {
+                                error!("Requested info for an entity that doesn't exist. {id:?}");
+                            }
+                        } else {
+                            error!("Someone requested an entity's info without being properly connected.");
+                        }
+                    }
                 }
             }
             _ => {}
         }
-    }
+    });
+}
+
+/// Send the requested info of the specified entity to the client
+/// at the given address.
+struct SendInfoRequest(NetworkID, SocketAddr, InfoRequestType);
+struct PlayerInfo(String);
+
+#[system]
+#[read_component(PlayerInfo)]
+fn send_player_info(
+    query: &mut Query<(&Entity, &SendInfoRequest)>,
+    world: &mut SubWorld,
+    #[resource] sender: &Sender<Packet>,
+    #[resource] networked_entities: &mut NetworkedEntities,
+    commands: &mut CommandBuffer,
+) {
+    query
+        .iter(world)
+        .for_each(|(message_entity, send_request)| {
+            // FIXME: Right now this just silently fails if a send request is created incorrectly
+            if let Some(e) = networked_entities.0.get(&send_request.0) {
+                if let Ok(entry) = world.entry_ref(*e) {
+                    if let Ok(info) = entry.get_component::<PlayerInfo>() {
+                        let msg = ServerMessage::SendNetworkedEntityInfo(
+                            send_request.0,
+                            InfoSendType::Identity(info.0.clone()),
+                        );
+
+                        let packet = Packet::unreliable(send_request.1, msg.to_payload());
+
+                        sender.send(packet).expect("This should send.");
+                    }
+                }
+            }
+
+            // TODO: Marking this as a handled message to be cleaned later
+            // would allow for multiple types of messages being parsed off of one entity.
+            commands.remove(*message_entity);
+        });
 }
