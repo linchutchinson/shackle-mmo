@@ -1,8 +1,8 @@
 use std::{net::SocketAddr, time::Instant};
 
 use common::{
-    math::Vec2, ClientMessage, DisconnectReason, GameArchetype, InfoSendType, NetworkID,
-    ServerMessage,
+    math::Vec2, ClientMessage, DisconnectReason, GameArchetype, InfoRequestType, InfoSendType,
+    NetworkID, ServerMessage,
 };
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
@@ -77,16 +77,11 @@ impl Client {
                     .send(ClientEvent::SpawnEntity(*id, *entity_type, *is_owned))
                     .expect("This should send.");
             }
-            ServerMessage::SendNetworkedEntityInfo(id, info) => match info {
-                InfoSendType::Position(pos) => {
-                    self.sender
-                        .send(ClientEvent::MoveEntity(*id, *pos))
-                        .expect("This should send.");
-                }
-                InfoSendType::Identity(name) => {
-                    unimplemented!()
-                }
-            },
+            ServerMessage::SendNetworkedEntityInfo(id, info) => {
+                self.sender
+                    .send(ClientEvent::UpdateEntityInfo(*id, info.clone()))
+                    .expect("This should send.");
+            }
             ServerMessage::SendMessage(author, text) => {
                 self.sender
                     .send(ClientEvent::MessageReceived(
@@ -129,6 +124,16 @@ impl Client {
     pub fn request_id_archetype(&mut self, id: NetworkID) -> Result<(), ClientError> {
         let conn = self.get_connection_mut()?;
         conn.send_message(ClientMessage::RequestArchetype(id))?;
+        Ok(())
+    }
+
+    pub fn request_id_info(
+        &mut self,
+        id: NetworkID,
+        info: InfoRequestType,
+    ) -> Result<(), ClientError> {
+        let conn = self.get_connection_mut()?;
+        conn.send_message(ClientMessage::RequestEntityInfo(id, info))?;
         Ok(())
     }
 
@@ -221,7 +226,7 @@ impl Connection {
 
 pub enum ClientEvent {
     SpawnEntity(NetworkID, GameArchetype, bool),
-    MoveEntity(NetworkID, Vec2),
+    UpdateEntityInfo(NetworkID, InfoSendType),
     MessageReceived(String, String),
 }
 

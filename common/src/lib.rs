@@ -32,7 +32,7 @@ pub enum InfoRequestType {
     Identity,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum InfoSendType {
     Identity(String),
     Position(Vec2),

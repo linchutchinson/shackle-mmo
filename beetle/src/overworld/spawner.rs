@@ -12,7 +12,7 @@ use crate::ui::{
 };
 
 use super::{
-    player::{Controller, Player, WorldDisplay},
+    player::{Controller, HoverName, NeedsName, Player, WorldDisplay},
     ChatMessageChannel, Position,
 };
 
@@ -60,10 +60,19 @@ pub fn spawn_local_player(commands: &mut CommandBuffer) -> Entity {
         Player,
         Controller,
         WorldDisplay("@".to_string(), WHITE),
+        HoverName {
+            name: "Me".to_string(),
+            radius: 24.0,
+        },
     ))
 }
 
 pub fn spawn_remote_player(commands: &mut CommandBuffer) -> Entity {
     let pos = PLAY_AREA_SIZE * 0.5;
-    commands.push((Position(pos), Player, WorldDisplay("@".to_string(), GREEN)))
+    commands.push((
+        Position(pos),
+        Player,
+        WorldDisplay("@".to_string(), GREEN),
+        NeedsName,
+    ))
 }

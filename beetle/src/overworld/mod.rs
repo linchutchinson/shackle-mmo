@@ -4,7 +4,7 @@ mod spawner;
 use std::collections::{HashMap, VecDeque};
 
 use client::{Client, ClientEvent};
-use common::{math::Vec2, GameArchetype, NetworkID, PLAY_AREA_SIZE};
+use common::{math::Vec2, GameArchetype, InfoRequestType, InfoSendType, NetworkID, PLAY_AREA_SIZE};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use legion::{system, systems::CommandBuffer, Entity, Schedule};
 use macroquad::{
@@ -21,7 +21,9 @@ use crate::{
 };
 
 use self::{
-    player::{draw_world_objects_system, move_player_system},
+    player::{
+        draw_hover_name_system, draw_world_objects_system, move_player_system, HoverName, NeedsName,
+    },
     spawner::{
         spawn_local_player, spawn_overworld_entities_system, spawn_overworld_ui_system,
         spawn_remote_player,
@@ -43,7 +45,8 @@ pub fn overworld_schedules() -> Schedules {
         .add_system(handle_client_events_system())
         .flush()
         .add_system(move_player_system())
-        .add_system(handle_sending_messages_system());
+        .add_system(handle_sending_messages_system())
+        .add_system(request_names_system());
     add_ui_layout_systems::<()>(&mut tick_sbuilder);
     let tick_schedule = tick_sbuilder.build();
 
@@ -51,7 +54,8 @@ pub fn overworld_schedules() -> Schedules {
     render_sbuilder
         .add_thread_local(draw_clear_color_system())
         .add_thread_local(draw_play_area_system())
-        .add_thread_local(draw_world_objects_system());
+        .add_thread_local(draw_world_objects_system())
+        .add_thread_local(draw_hover_name_system());
     add_ui_rendering_systems::<()>(&mut render_sbuilder);
     render_sbuilder.add_thread_local(draw_chatlog_system());
     let render_schedule = render_sbuilder.build();
@@ -163,14 +167,23 @@ fn handle_client_events(
                     }
                 };
 
+                commands.add_component(e, id);
                 networked_entities.0.insert(id, e);
             }
-            ClientEvent::MoveEntity(id, pos) => {
+            ClientEvent::UpdateEntityInfo(id, info) => {
                 if let Some(e) = networked_entities.0.get(&id) {
-                    commands.add_component(*e, Position(pos));
+                    match info {
+                        InfoSendType::Position(pos) => {
+                            commands.add_component(*e, Position(pos));
+                        }
+                        InfoSendType::Identity(name) => {
+                            commands.add_component(*e, HoverName { name, radius: 24.0 });
+                            commands.remove_component::<NeedsName>(*e);
+                        }
+                    }
                 } else {
                     log::info!(
-                        "Did not have an entity to reposition. Requesting archetype from server..."
+                        "Did not have an entity to update with given info. Requesting archetype from server..."
                     );
                     // FIXME: Do not pretend there are never network issues.
                     client
@@ -183,4 +196,16 @@ fn handle_client_events(
                 chat_messages.add_message(&author, &text);
             }
         });
+}
+
+#[system(for_each)]
+fn request_names(_: &NeedsName, id: &NetworkID, #[resource] client: &mut Client) {
+    let result = client.request_id_info(*id, InfoRequestType::Identity);
+
+    if result.is_err() {
+        log::error!(
+            "Encountered an error requesting information on an entity. {:?}",
+            result.unwrap_err()
+        );
+    }
 }

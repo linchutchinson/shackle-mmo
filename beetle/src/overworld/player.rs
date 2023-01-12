@@ -2,8 +2,8 @@ use client::Client;
 use common::{math::Vec2, PLAY_AREA_SIZE};
 use legion::system;
 use macroquad::{
-    prelude::{is_key_down, Color},
-    text::draw_text,
+    prelude::{is_key_down, mouse_position, Color, BLACK, WHITE},
+    text::{draw_text, measure_text},
     window::{screen_height, screen_width},
 };
 
@@ -12,6 +12,11 @@ use super::Position;
 pub struct Player;
 pub struct Controller;
 pub struct WorldDisplay(pub String, pub Color);
+pub struct NeedsName;
+pub struct HoverName {
+    pub radius: f32,
+    pub name: String,
+}
 
 #[system(for_each)]
 pub fn draw_world_objects(display: &WorldDisplay, pos: &Position) {
@@ -64,5 +69,24 @@ pub fn move_player(
         if result.is_err() {
             log::error!("Error sending move packet. {:?}", result.unwrap_err());
         }
+    }
+}
+
+#[system(for_each)]
+pub fn draw_hover_name(pos: &Position, hover_name: &HoverName) {
+    let mouse_pos: Vec2 = mouse_position().into();
+
+    let screen_pos =
+        pos.0 + Vec2::from((screen_width(), screen_height())) * 0.5 - PLAY_AREA_SIZE * 0.5;
+
+    if screen_pos.distance_to(mouse_pos) <= hover_name.radius {
+        let text_size = measure_text(&hover_name.name, None, 24, 1.0);
+        draw_text(
+            &hover_name.name,
+            screen_pos.x - text_size.width * 0.5,
+            screen_pos.y - hover_name.radius,
+            24.0,
+            WHITE,
+        );
     }
 }

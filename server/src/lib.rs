@@ -173,6 +173,7 @@ fn parse_incoming_packets(
                     ClientMessage::RequestEntityInfo(id, info) => {
                         if let Some(_) = clients.addr_map.get(&packet.addr()) {
                             if let Some(_) = networked_entities.0.get(&id) {
+                                info!("Marking an entity to send its info to a client with ID {id:?}");
                                 commands.push((SendInfoRequest(id, packet.addr(), info),));
                             } else {
                                 error!("Requested info for an entity that doesn't exist. {id:?}");
@@ -194,9 +195,10 @@ struct SendInfoRequest(NetworkID, SocketAddr, InfoRequestType);
 struct PlayerInfo(String);
 
 #[system]
+#[read_component(SendInfoRequest)]
 #[read_component(PlayerInfo)]
 fn send_player_info(
-    query: &mut Query<(&Entity, &SendInfoRequest)>,
+    query: &mut Query<(Entity, &SendInfoRequest)>,
     world: &mut SubWorld,
     #[resource] sender: &Sender<Packet>,
     #[resource] networked_entities: &mut NetworkedEntities,
