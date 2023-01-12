@@ -8,7 +8,7 @@ use common::{math::Vec2, GameObject, NetworkID, PLAY_AREA_SIZE};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use legion::{system, systems::CommandBuffer, Entity, Schedule};
 use macroquad::{
-    prelude::{Color, BLACK, DARKBLUE, DARKBROWN, DARKGRAY},
+    prelude::{Color, BLACK, DARKBROWN},
     shapes::draw_rectangle,
     text::draw_text,
     window::{screen_height, screen_width},

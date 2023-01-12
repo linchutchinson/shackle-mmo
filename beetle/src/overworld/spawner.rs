@@ -1,6 +1,6 @@
 use client::Client;
-use common::{math::Vec2, PLAY_AREA_SIZE};
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use common::PLAY_AREA_SIZE;
+use crossbeam_channel::unbounded;
 use legion::{system, systems::CommandBuffer, Entity};
 use macroquad::prelude::{GREEN, WHITE};
 
@@ -51,7 +51,7 @@ pub fn spawn_overworld_ui(
 }
 
 #[system]
-pub fn spawn_overworld_entities(commands: &mut CommandBuffer) {}
+pub fn spawn_overworld_entities(_commands: &mut CommandBuffer) {}
 
 pub fn spawn_local_player(commands: &mut CommandBuffer) -> Entity {
     let pos = PLAY_AREA_SIZE * 0.5;

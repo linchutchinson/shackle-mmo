@@ -59,6 +59,10 @@ pub fn move_player(
         pos.0 += move_vec;
 
         // TODO: Handle network errors.
-        client.move_player(pos.0);
+        let result = client.move_player(pos.0);
+
+        if result.is_err() {
+            log::error!("Error sending move packet. {:?}", result.unwrap_err());
+        }
     }
 }

@@ -4,13 +4,10 @@ mod spawner;
 use client::{Client, ConnectionStatus};
 use common::validation::validate_username;
 use legion::{
-    system,
-    systems::CommandBuffer,
-    world::{self, SubWorld},
-    Entity, EntityStore, Query, Schedule,
+    system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore, Query, Schedule,
 };
 use log::{error, info};
-use macroquad::{prelude::DARKBLUE, window::clear_background};
+use macroquad::prelude::DARKBLUE;
 
 use crate::{
     draw_clear_color_system,
