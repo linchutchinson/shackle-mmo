@@ -120,7 +120,7 @@ impl Client {
         Ok(())
     }
 
-    pub fn request_id_archetype(&mut self, id: usize) -> Result<(), ClientError> {
+    pub fn request_id_archetype(&mut self, id: NetworkID) -> Result<(), ClientError> {
         let conn = self.get_connection_mut()?;
         conn.send_message(ClientMessage::RequestArchetype(id))?;
         Ok(())

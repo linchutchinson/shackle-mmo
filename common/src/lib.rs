@@ -11,7 +11,7 @@ pub enum ClientMessage {
     // The String is the desired Username
     Connect(String),
     MoveTo(Vec2),
-    RequestArchetype(usize),
+    RequestArchetype(NetworkID),
     SendMessage(String),
     Disconnect,
 }
