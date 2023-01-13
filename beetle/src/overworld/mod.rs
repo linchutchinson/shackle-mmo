@@ -183,6 +183,12 @@ fn handle_client_events(
                 commands.add_component(e, id);
                 networked_entities.0.insert(id, e);
             }
+            ClientEvent::DespawnEntity(id) => {
+                if let Some(e)  = networked_entities.0.remove(&id) {
+                    commands.remove(e);
+                }
+                // We don't mind if this silently passes if the entity wasn't spawned in.
+            }
             ClientEvent::UpdateEntityInfo(id, info) => {
                 if let Some(e) = networked_entities.0.get(&id) {
                     match info {

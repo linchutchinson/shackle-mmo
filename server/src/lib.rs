@@ -3,7 +3,8 @@ mod message_handling;
 use std::{collections::HashMap, net::SocketAddr, thread, time::Duration};
 
 use common::{
-    ClientMessage, InfoRequestType, InfoSendType, NetworkID, ServerMessage, PLAY_AREA_SIZE,
+    ClientMessage, GameArchetype, InfoRequestType, InfoSendType, NetworkID, ServerMessage,
+    PLAY_AREA_SIZE,
 };
 use crossbeam_channel::{Receiver, Sender};
 use laminar::{Config, ErrorKind, Packet, Socket, SocketEvent};
@@ -17,7 +18,7 @@ use crate::message_handling::handle_connect_message;
 
 fn server_socket_config() -> Config {
     Config {
-        idle_connection_timeout: Duration::from_secs(180),
+        idle_connection_timeout: Duration::from_secs(60),
         ..Default::default()
     }
 }
@@ -79,7 +80,7 @@ struct ClientInfo {
     player_id: NetworkID,
 }
 
-pub struct NetworkedEntities(HashMap<NetworkID, Entity>);
+pub struct NetworkedEntities(HashMap<NetworkID, (Entity, GameArchetype)>);
 
 #[system]
 fn parse_incoming_packets(
@@ -95,7 +96,20 @@ fn parse_incoming_packets(
             //TODO: Handle Timeouts
             SocketEvent::Disconnect(addr) => {
                 if let Some(client_info) = clients.addr_map.remove(&addr) {
-                    println!("{} has disconnected", client_info.username);
+                    info!("{} has disconnected", client_info.username);
+
+                    let id = client_info.player_id;
+
+                    let chat_message = ServerMessage::SendMessage(format!("SERVER"), format!("{} has disconnected.", client_info.username));
+                    let delete_message = ServerMessage::DespawnNetworkedEntity(id);
+
+                    clients.all_addresses().iter().for_each(|addr| {
+                        let chat_packet = Packet::reliable_unordered(*addr, chat_message.to_payload());
+                        let delete_packet = Packet::reliable_unordered(*addr, delete_message.to_payload());
+
+                        sender.send(chat_packet);
+                        sender.send(delete_packet);
+                    });
                 }
             }
             SocketEvent::Packet(packet) => {
@@ -221,7 +235,7 @@ fn send_player_info(
         .iter(world)
         .for_each(|(message_entity, send_request)| {
             // FIXME: Right now this just silently fails if a send request is created incorrectly
-            if let Some(e) = networked_entities.0.get(&send_request.0) {
+            if let Some((e, _)) = networked_entities.0.get(&send_request.0) {
                 if let Ok(entry) = world.entry_ref(*e) {
                     if let Ok(info) = entry.get_component::<PlayerInfo>() {
                         let msg = ServerMessage::SendNetworkedEntityInfo(

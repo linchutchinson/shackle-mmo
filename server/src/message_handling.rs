@@ -62,7 +62,9 @@ pub fn handle_connect_message(
         });
 
         let e = commands.push((GameArchetype::Player, PlayerInfo(username.to_string())));
-        networked_entities.0.insert(player_id, e);
+        networked_entities
+            .0
+            .insert(player_id, (e, GameArchetype::Player));
 
         let msg = ServerMessage::SendMessage("SERVER".to_string(), txt);
         clients.all_addresses().iter().for_each(|addr| {

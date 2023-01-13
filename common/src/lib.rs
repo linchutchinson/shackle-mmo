@@ -42,6 +42,7 @@ pub enum InfoSendType {
 pub enum ServerMessage {
     ConnectionAccepted,
     SpawnNetworkedEntity(NetworkID, GameArchetype, bool),
+    DespawnNetworkedEntity(NetworkID),
     SendNetworkedEntityInfo(NetworkID, InfoSendType),
     SendMessage(String, String),
     DisconnectClient(DisconnectReason),

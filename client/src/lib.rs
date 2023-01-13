@@ -80,6 +80,11 @@ impl Client {
                     .send(ClientEvent::SpawnEntity(*id, *entity_type, *is_owned))
                     .expect("This should send.");
             }
+            ServerMessage::DespawnNetworkedEntity(id) => {
+                self.sender
+                    .send(ClientEvent::DespawnEntity(*id))
+                    .expect("This should send.");
+            }
             ServerMessage::SendNetworkedEntityInfo(id, info) => {
                 self.sender
                     .send(ClientEvent::UpdateEntityInfo(*id, info.clone()))
@@ -170,7 +175,7 @@ pub enum ConnectionStatus {
 
 fn client_socket_config() -> Config {
     Config {
-        heartbeat_interval: Some(Duration::from_secs(60)),
+        heartbeat_interval: Some(Duration::from_secs(30)),
         ..Default::default()
     }
 }
@@ -236,6 +241,7 @@ impl Connection {
 
 pub enum ClientEvent {
     SpawnEntity(NetworkID, GameArchetype, bool),
+    DespawnEntity(NetworkID),
     UpdateEntityInfo(NetworkID, InfoSendType),
     MessageReceived(String, String),
 }
