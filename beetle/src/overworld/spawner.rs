@@ -13,7 +13,7 @@ use crate::ui::{
 };
 
 use super::{
-    player::{Controller, HoverName, NeedsName, Player, WorldDisplay},
+    player::{Controller, HoverName, NeedsName, OtherPlayer, Player, WorldDisplay},
     ChatMessageChannel, OverworldUIEvent, OverworldUIEventChannel, Position,
 };
 
@@ -79,5 +79,6 @@ pub fn spawn_remote_player(commands: &mut CommandBuffer) -> Entity {
         Player,
         WorldDisplay("@".to_string(), GREEN),
         NeedsName,
+        OtherPlayer,
     ))
 }

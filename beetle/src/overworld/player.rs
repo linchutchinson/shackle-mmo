@@ -1,13 +1,18 @@
 use client::Client;
-use common::{math::Vec2, PLAY_AREA_SIZE};
-use legion::system;
+use common::{
+    math::{Rect, Vec2},
+    NetworkID, PLAY_AREA_SIZE,
+};
+use legion::{system, systems::CommandBuffer};
 use macroquad::{
-    prelude::{is_key_down, mouse_position, Color, BLACK, WHITE},
+    prelude::{is_key_down, is_mouse_button_pressed, mouse_position, Color, BLACK, WHITE},
     text::{draw_text, measure_text},
     window::{screen_height, screen_width},
 };
 
-use super::Position;
+use crate::ui::spawner::{spawn_button, spawn_context_menu};
+
+use super::{OverworldUIEvent, OverworldUIEventChannel, Position};
 
 pub struct Player;
 pub struct Controller;
@@ -72,12 +77,15 @@ pub fn move_player(
     }
 }
 
+pub fn world_to_screen(pos: Vec2) -> Vec2 {
+    pos + Vec2::from((screen_width(), screen_height())) * 0.5 - PLAY_AREA_SIZE * 0.5
+}
+
 #[system(for_each)]
 pub fn draw_hover_name(pos: &Position, hover_name: &HoverName) {
     let mouse_pos: Vec2 = mouse_position().into();
 
-    let screen_pos =
-        pos.0 + Vec2::from((screen_width(), screen_height())) * 0.5 - PLAY_AREA_SIZE * 0.5;
+    let screen_pos = world_to_screen(pos.0);
 
     if screen_pos.distance_to(mouse_pos) <= hover_name.radius {
         let text_size = measure_text(&hover_name.name, None, 24, 1.0);
@@ -88,5 +96,33 @@ pub fn draw_hover_name(pos: &Position, hover_name: &HoverName) {
             24.0,
             WHITE,
         );
+    }
+}
+
+pub struct OtherPlayer;
+
+#[system(for_each)]
+pub fn spawn_context_menu_when_rclicked(
+    network_id: &NetworkID,
+    pos: &Position,
+    _: &OtherPlayer,
+    #[resource] event_stream: &OverworldUIEventChannel,
+    commands: &mut CommandBuffer,
+) {
+    const CLICK_RADIUS: f32 = 32.0;
+    let screen_pos = world_to_screen(pos.0);
+    let mouse_pos = mouse_position().into();
+
+    if screen_pos.distance_to(mouse_pos) <= CLICK_RADIUS
+        && is_mouse_button_pressed(macroquad::prelude::MouseButton::Right)
+    {
+        let duel_button = spawn_button(
+            commands,
+            "DUEL",
+            event_stream.0.clone(),
+            OverworldUIEvent::Challenge(*network_id),
+        );
+        let menu = spawn_context_menu(commands, &[duel_button]);
+        commands.add_component(menu, Rect::new(mouse_pos.x, mouse_pos.y, 100.0, 200.0));
     }
 }

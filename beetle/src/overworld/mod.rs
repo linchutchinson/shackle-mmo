@@ -22,7 +22,8 @@ use crate::{
 
 use self::{
     player::{
-        draw_hover_name_system, draw_world_objects_system, move_player_system, HoverName, NeedsName,
+        draw_hover_name_system, draw_world_objects_system, move_player_system,
+        spawn_context_menu_when_rclicked_system, HoverName, NeedsName,
     },
     spawner::{
         spawn_local_player, spawn_overworld_entities_system, spawn_overworld_ui_system,
@@ -35,6 +36,7 @@ pub struct OverworldUIEventChannel(pub Sender<OverworldUIEvent>, pub Receiver<Ov
 
 #[derive(Copy, Clone)]
 pub enum OverworldUIEvent {
+    Challenge(NetworkID),
     Logout,
 }
 
@@ -53,6 +55,7 @@ pub fn overworld_schedules() -> Schedules {
         .flush()
         .add_system(move_player_system())
         .add_system(handle_sending_messages_system())
+        .add_system(spawn_context_menu_when_rclicked_system())
         .add_system(request_names_system());
     add_ui_layout_systems::<OverworldUIEvent>(&mut tick_sbuilder);
     let tick_schedule = tick_sbuilder.build();
@@ -227,6 +230,9 @@ fn handle_overworld_ui_events(
     #[resource] next_state: &mut NextState,
 ) {
     ui_event_channel.1.try_iter().for_each(|event| match event {
+        OverworldUIEvent::Challenge(id) => {
+            unimplemented!()
+        }
         OverworldUIEvent::Logout => {
             next_state.0 = Some(crate::AppState::MainMenu);
         }
