@@ -6,7 +6,7 @@ use super::{
     button::Button,
     container::UIContainer,
     text::{DynamicText, Text, TextInput},
-    UIConstraint, UILayer, UIRoot, UISize,
+    DeleteOnClickOff, UIConstraint, UILayer, UIRoot, UISize,
 };
 
 /// Spawn a text object that grows or shrinks its font size to fit within a rect.
@@ -68,6 +68,7 @@ pub fn spawn_context_menu(commands: &mut CommandBuffer, children: &[Entity]) -> 
 
     commands.add_component(ctx_menu, UIRoot);
     commands.add_component(ctx_menu, UILayer);
+    commands.add_component(ctx_menu, DeleteOnClickOff);
 
     ctx_menu
 }
