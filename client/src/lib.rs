@@ -1,11 +1,14 @@
-use std::{net::SocketAddr, time::Instant};
+use std::{
+    net::SocketAddr,
+    time::{Duration, Instant},
+};
 
 use common::{
     math::Vec2, ClientMessage, DisconnectReason, GameArchetype, InfoRequestType, InfoSendType,
     NetworkID, ServerMessage,
 };
 use crossbeam_channel::{unbounded, Receiver, Sender};
-use laminar::{ErrorKind, Packet, Socket, SocketEvent};
+use laminar::{Config, ErrorKind, Packet, Socket, SocketEvent};
 
 pub struct Client {
     connection: Option<(Connection, ConnectionStatus)>,
@@ -165,6 +168,13 @@ pub enum ConnectionStatus {
     Failed(DisconnectReason),
 }
 
+fn client_socket_config() -> Config {
+    Config {
+        heartbeat_interval: Some(Duration::from_secs(60)),
+        ..Default::default()
+    }
+}
+
 struct Connection {
     server_addr: SocketAddr,
     socket: Socket,
@@ -173,7 +183,7 @@ struct Connection {
 impl Connection {
     fn new() -> Result<Self, ErrorKind> {
         // TODO Select a valid port to bind to in a more sophisticated way.
-        let socket = Socket::bind("0.0.0.0:0")?;
+        let socket = Socket::bind_with_config("0.0.0.0:0", client_socket_config())?;
 
         // FIXME This is not a real server address.
         let addr_string = std::env::var("SHACKLE_SERVER").unwrap_or("5.78.56.23".to_string());

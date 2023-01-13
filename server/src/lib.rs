@@ -6,7 +6,7 @@ use common::{
     ClientMessage, InfoRequestType, InfoSendType, NetworkID, ServerMessage, PLAY_AREA_SIZE,
 };
 use crossbeam_channel::{Receiver, Sender};
-use laminar::{ErrorKind, Packet, Socket, SocketEvent};
+use laminar::{Config, ErrorKind, Packet, Socket, SocketEvent};
 use legion::{
     system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore, Query, Resources,
     Schedule, World,
@@ -15,10 +15,17 @@ use log::{error, info};
 
 use crate::message_handling::handle_connect_message;
 
+fn server_socket_config() -> Config {
+    Config {
+        idle_connection_timeout: Duration::from_secs(180),
+        ..Default::default()
+    }
+}
+
 pub fn server() -> Result<(), ErrorKind> {
     let addr = "0.0.0.0:27008";
     println!("Listening at port 27008");
-    let mut socket = Socket::bind(addr)?;
+    let mut socket = Socket::bind_with_config(addr, server_socket_config())?;
 
     let (sender, receiver) = (socket.get_packet_sender(), socket.get_event_receiver());
     let _thread = thread::spawn(move || socket.start_polling());
@@ -85,6 +92,12 @@ fn parse_incoming_packets(
 ) {
     receiver.try_iter().for_each(|event|  {
         match event {
+            //TODO: Handle Timeouts
+            SocketEvent::Disconnect(addr) => {
+                if let Some(client_info) = clients.addr_map.remove(&addr) {
+                    println!("{} has disconnected", client_info.username);
+                }
+            }
             SocketEvent::Packet(packet) => {
                 let msg = ClientMessage::from_payload(packet.payload());
 
