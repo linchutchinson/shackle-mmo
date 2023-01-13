@@ -1,13 +1,13 @@
-use legion::{system, systems::CommandBuffer};
+use legion::{system, systems::CommandBuffer, world::SubWorld};
 
 use crate::{
     main_menu::event::{MainMenuEvent, NotificationDisplay},
     ui::{
         spawner::{
-            spawn_button, spawn_dynamic_text, spawn_spacer, spawn_text_input, spawn_ui_container,
-            spawn_ui_panel,
+            spawn_button, spawn_context_menu, spawn_dynamic_text, spawn_spacer, spawn_text_input,
+            spawn_ui_container, spawn_ui_panel,
         },
-        Spinner, UIConstraint, UIRoot, UISize,
+        FullscreenRoot, Spinner, UIConstraint, UIRoot, UISize,
     },
 };
 
@@ -62,6 +62,7 @@ pub fn spawn_login_menu(commands: &mut CommandBuffer, event_handler: &MainMenuEv
 
     let root = spawn_ui_container(commands, &[title_text, spacer, button_container]);
     commands.add_component(root, UIRoot);
+    commands.add_component(root, FullscreenRoot);
 }
 
 #[system]
@@ -69,6 +70,9 @@ pub fn spawn_main_menu(
     commands: &mut CommandBuffer,
     #[resource] event_handler: &MainMenuEventHandler,
 ) {
+    commands.exec_mut(|world, _| {
+        world.clear();
+    });
     log::trace!("Spawning Main Menu Components...");
 
     let title_text = spawn_dynamic_text(commands, "Shackle MMO");
@@ -108,6 +112,7 @@ pub fn spawn_main_menu(
 
     let root = spawn_ui_container(commands, &[title_text, spacer, button_container]);
     commands.add_component(root, UIRoot);
+    commands.add_component(root, FullscreenRoot);
 }
 
 pub fn spawn_connecting_screen(commands: &mut CommandBuffer) {
@@ -133,4 +138,5 @@ pub fn spawn_connecting_screen(commands: &mut CommandBuffer) {
 
     let root = spawn_ui_container(commands, &[title_text, spacer, button_container]);
     commands.add_component(root, UIRoot);
+    commands.add_component(root, FullscreenRoot);
 }

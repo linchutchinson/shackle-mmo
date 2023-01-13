@@ -19,6 +19,10 @@ impl Text {
     }
 }
 
+pub trait TextReceiver {
+    fn send(text: &str);
+}
+
 pub struct SubmitOnEnter(pub Sender<String>);
 pub struct TextInput {
     state: TextInputState,

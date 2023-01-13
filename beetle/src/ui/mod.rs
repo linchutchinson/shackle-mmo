@@ -5,7 +5,9 @@ mod text;
 
 pub mod spawner;
 
-pub use container::{UIConstraint, UIRoot, UISize};
+pub use container::{FullscreenRoot, UIConstraint, UIRoot, UISize};
+use macroquad::prelude::RED;
+use macroquad::shapes::draw_rectangle_lines;
 pub use spinner::Spinner;
 pub use text::SubmitOnEnter;
 pub use text::Text;
@@ -14,10 +16,11 @@ use common::math::Rect;
 use legion::{system, systems::Builder};
 use macroquad::{prelude::Color, shapes::draw_rectangle};
 
+use self::container::size_fullscreen_root_system;
 use self::text::handle_text_input_submit_on_enter_system;
 use self::{
     button::{draw_button_system, handle_button_input_system},
-    container::{layout_ui_system, size_ui_root_system},
+    container::layout_ui_system,
     spinner::{draw_spinner_system, rotate_spinner_system},
     text::{
         calculate_dynamic_font_size_system, handle_text_input_input_system,
@@ -30,7 +33,7 @@ use self::{
 
 pub fn add_ui_layout_systems<T: Send + Sync + Copy + 'static>(builder: &mut Builder) {
     builder
-        .add_system(size_ui_root_system())
+        .add_system(size_fullscreen_root_system())
         .flush()
         .add_system(layout_ui_system())
         .flush()
@@ -55,8 +58,7 @@ pub fn add_ui_rendering_systems<T: Send + Sync + Copy + 'static>(builder: &mut B
         .flush();
 }
 
-/*
-TODO: Make this a debug toggleable feature.
+//TODO: Make this a debug toggleable feature.
 #[system(for_each)]
 fn render_rect_outlines(rect: &Rect) {
     draw_rectangle_lines(
@@ -68,7 +70,6 @@ fn render_rect_outlines(rect: &Rect) {
         RED,
     );
 }
-*/
 
 struct UILayer;
 

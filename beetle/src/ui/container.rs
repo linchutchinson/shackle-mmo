@@ -1,11 +1,15 @@
-use common::math::Rect;
+use common::math::{Rect, Vec2};
 use legion::{
     query::IntoQuery, system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore,
 };
-use macroquad::window::{screen_height, screen_width};
+use macroquad::{
+    prelude::{is_mouse_button_pressed, mouse_position},
+    window::{screen_height, screen_width},
+};
 
 // TODO Add support for manually sized/positioned UI roots for windowing.
 pub struct UIRoot;
+pub struct FullscreenRoot;
 
 pub struct UIContainer {
     pub children: Vec<Entity>,
@@ -61,7 +65,12 @@ impl UIConstraint {
 }
 
 #[system(for_each)]
-pub fn size_ui_root(entity: &Entity, _: &UIRoot, commands: &mut CommandBuffer) {
+pub fn size_fullscreen_root(
+    entity: &Entity,
+    _: &UIRoot,
+    _: &FullscreenRoot,
+    commands: &mut CommandBuffer,
+) {
     let height = screen_height();
     let width = screen_width();
     let rect = Rect::new(0.0, 0.0, width, height);

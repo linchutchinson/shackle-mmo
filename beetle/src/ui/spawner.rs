@@ -6,7 +6,7 @@ use super::{
     button::Button,
     container::UIContainer,
     text::{DynamicText, Text, TextInput},
-    UIConstraint, UILayer, UISize,
+    UIConstraint, UILayer, UIRoot, UISize,
 };
 
 /// Spawn a text object that grows or shrinks its font size to fit within a rect.
@@ -61,4 +61,13 @@ pub fn spawn_button<T: Send + Sync + Copy + 'static>(
 
 pub fn spawn_text_input(commands: &mut CommandBuffer) -> Entity {
     commands.push((TextInput::new(), Text::empty(32.0), UISize::Grow(1)))
+}
+
+pub fn spawn_context_menu(commands: &mut CommandBuffer, children: &[Entity]) -> Entity {
+    let ctx_menu = spawn_ui_container(commands, children);
+
+    commands.add_component(ctx_menu, UIRoot);
+    commands.add_component(ctx_menu, UILayer);
+
+    ctx_menu
 }
