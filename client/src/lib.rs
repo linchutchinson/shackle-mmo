@@ -1,7 +1,7 @@
 mod connection;
 mod dueling;
-use connection::Connection;
 pub use connection::ConnectionStatus;
+use connection::{Connection, ConnectionInterface};
 
 use common::{
     math::Vec2,
@@ -11,14 +11,16 @@ use common::{
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use laminar::ErrorKind;
 
-pub struct Client {
-    connection: Option<(Connection, ConnectionStatus)>,
+pub type NetworkClient = Client<Connection>;
+
+pub struct Client<T: ConnectionInterface> {
+    connection: Option<(T, ConnectionStatus)>,
     username: Option<String>,
     sender: Sender<ClientEvent>,
     receiver: Receiver<ClientEvent>,
 }
 
-impl Client {
+impl<T: ConnectionInterface> Client<T> {
     pub fn new() -> Self {
         let (sender, receiver) = unbounded();
         Self {
@@ -34,7 +36,7 @@ impl Client {
             return Err(ClientError::DuplicateConnectionError);
         }
 
-        let conn = Connection::new()?;
+        let conn = T::new()?;
         self.connection = Some((conn, ConnectionStatus::Connecting));
 
         let result = self
@@ -121,7 +123,7 @@ impl Client {
         self.receiver.clone()
     }
 
-    fn get_connection_mut(&mut self) -> Result<&mut Connection, ClientError> {
+    fn get_connection_mut(&mut self) -> Result<&mut T, ClientError> {
         if self.connection.is_none() {
             return Err(ClientError::NotConnected);
         }
@@ -177,4 +179,15 @@ pub enum ClientEvent {
     DespawnEntity(NetworkID),
     UpdateEntityInfo(NetworkID, InfoSendType),
     MessageReceived(String, String),
+}
+
+#[cfg(test)]
+pub mod test_utils {
+    use super::*;
+}
+
+#[cfg(test)]
+mod test {
+    use super::test_utils::*;
+    use super::*;
 }

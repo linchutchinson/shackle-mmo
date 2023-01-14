@@ -1,14 +1,32 @@
 use common::NetworkID;
 
-use crate::{Client, ClientError};
+use crate::{connection::ConnectionInterface, Client, ClientError};
 
 pub trait DuelingClient {
     fn send_challenge(&mut self, target_id: NetworkID) -> Result<(), ClientError>;
+
+    fn respond_to_challenge(
+        &mut self,
+        target_id: NetworkID,
+        response: bool,
+    ) -> Result<(), ClientError>;
 }
 
-impl DuelingClient for Client {
+impl<T: ConnectionInterface> DuelingClient for Client<T> {
     fn send_challenge(&mut self, target_id: NetworkID) -> Result<(), ClientError> {
-        let conn = self.get_connection_mut()?;
-        Ok(())
+        unimplemented!()
     }
+
+    fn respond_to_challenge(
+        &mut self,
+        target_id: NetworkID,
+        response: bool,
+    ) -> Result<(), ClientError> {
+        unimplemented!()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
 }

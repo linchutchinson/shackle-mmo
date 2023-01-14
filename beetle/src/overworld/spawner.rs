@@ -1,4 +1,4 @@
-use client::Client;
+use client::NetworkClient;
 use common::PLAY_AREA_SIZE;
 use crossbeam_channel::unbounded;
 use legion::{system, systems::CommandBuffer, Entity};
@@ -19,7 +19,7 @@ use super::{
 
 #[system]
 pub fn spawn_overworld_ui(
-    #[resource] client: &Client,
+    #[resource] client: &NetworkClient,
     #[resource] chat_message_channel: &ChatMessageChannel,
     #[resource] ui_event_channel: &OverworldUIEventChannel,
     commands: &mut CommandBuffer,

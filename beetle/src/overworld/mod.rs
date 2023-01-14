@@ -3,7 +3,7 @@ mod spawner;
 
 use std::collections::{HashMap, VecDeque};
 
-use client::{Client, ClientEvent};
+use client::{ClientEvent, NetworkClient};
 use common::{
     math::Vec2,
     messages::{InfoRequestType, InfoSendType},
@@ -83,7 +83,7 @@ pub fn overworld_schedules() -> Schedules {
 
 #[system]
 fn handle_sending_messages(
-    #[resource] client: &mut Client,
+    #[resource] client: &mut NetworkClient,
     #[resource] message_stream: &ChatMessageChannel,
 ) {
     let r = message_stream.1.clone();
@@ -160,7 +160,7 @@ pub struct NetworkedEntities(HashMap<NetworkID, Entity>);
 #[system]
 fn handle_client_events(
     #[resource] networked_entities: &mut NetworkedEntities,
-    #[resource] client: &mut Client,
+    #[resource] client: &mut NetworkClient,
     #[resource] chat_messages: &mut ChatMessages,
     commands: &mut CommandBuffer,
 ) {
@@ -222,7 +222,7 @@ fn handle_client_events(
 }
 
 #[system(for_each)]
-fn request_names(_: &NeedsName, id: &NetworkID, #[resource] client: &mut Client) {
+fn request_names(_: &NeedsName, id: &NetworkID, #[resource] client: &mut NetworkClient) {
     let result = client.request_id_info(*id, InfoRequestType::Identity);
 
     if result.is_err() {
@@ -236,7 +236,7 @@ fn request_names(_: &NeedsName, id: &NetworkID, #[resource] client: &mut Client)
 #[system]
 fn handle_overworld_ui_events(
     #[resource] ui_event_channel: &OverworldUIEventChannel,
-    #[resource] client: &mut Client,
+    #[resource] client: &mut NetworkClient,
     #[resource] next_state: &mut NextState,
 ) {
     ui_event_channel.1.try_iter().for_each(|event| match event {

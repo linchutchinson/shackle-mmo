@@ -1,7 +1,7 @@
 mod event;
 mod spawner;
 
-use client::{Client, ConnectionStatus};
+use client::{ConnectionStatus, NetworkClient};
 use common::validation::validate_username;
 use legion::{
     system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore, Query, Schedule,
@@ -73,7 +73,7 @@ fn handle_main_menu_events(
     query: &mut Query<Entity>,
     #[resource] handler: &mut MainMenuEventHandler,
     #[resource] next_state: &mut NextState,
-    #[resource] client: &mut Client,
+    #[resource] client: &mut NetworkClient,
     commands: &mut CommandBuffer,
 ) {
     let receiver = handler.event_receiver().clone();
@@ -136,7 +136,7 @@ fn init_main_menu_resources(commands: &mut CommandBuffer) {
         let event_handler = MainMenuEventHandler::new();
         resources.insert(event_handler);
         resources.insert(ClearColor(DARKBLUE));
-        resources.insert(Client::new());
+        resources.insert(NetworkClient::new());
     });
 }
 
@@ -144,7 +144,7 @@ fn init_main_menu_resources(commands: &mut CommandBuffer) {
 fn join_server_when_connected(
     query: &mut Query<Entity>,
     world: &mut SubWorld,
-    #[resource] client: &mut Client,
+    #[resource] client: &mut NetworkClient,
     #[resource] next_state: &mut NextState,
     commands: &mut CommandBuffer,
 ) {

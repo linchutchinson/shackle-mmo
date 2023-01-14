@@ -26,8 +26,17 @@ pub struct Connection {
     socket: Socket,
 }
 
-impl Connection {
-    pub fn new() -> Result<Self, ErrorKind> {
+pub trait ConnectionInterface
+where
+    Self: Sized,
+{
+    fn new() -> Result<Self, ErrorKind>;
+    fn send_message(&mut self, message: ClientMessage) -> Result<(), ErrorKind>;
+    fn receive_messages(&mut self) -> Vec<ServerMessage>;
+}
+
+impl ConnectionInterface for Connection {
+    fn new() -> Result<Self, ErrorKind> {
         // TODO Select a valid port to bind to in a more sophisticated way.
         let socket = Socket::bind_with_config("0.0.0.0:0", client_socket_config())?;
 
@@ -42,7 +51,7 @@ impl Connection {
         })
     }
 
-    pub fn send_message(&mut self, message: ClientMessage) -> Result<(), ErrorKind> {
+    fn send_message(&mut self, message: ClientMessage) -> Result<(), ErrorKind> {
         let payload = message.to_payload();
         let msg_type = MessageType::from(message);
         let packet = match msg_type {
@@ -54,7 +63,7 @@ impl Connection {
         Ok(())
     }
 
-    pub fn receive_messages(&mut self) -> Vec<ServerMessage> {
+    fn receive_messages(&mut self) -> Vec<ServerMessage> {
         let mut result = Vec::new();
 
         self.socket.manual_poll(Instant::now());

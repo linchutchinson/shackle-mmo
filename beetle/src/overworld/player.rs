@@ -1,4 +1,4 @@
-use client::Client;
+use client::NetworkClient;
 use common::{
     math::{Rect, Vec2},
     NetworkID, PLAY_AREA_SIZE,
@@ -39,7 +39,7 @@ pub fn draw_world_objects(display: &WorldDisplay, pos: &Position) {
 
 #[system(for_each)]
 pub fn move_player(
-    #[resource] client: &mut Client,
+    #[resource] client: &mut NetworkClient,
     _: &Player,
     _: &Controller,
     pos: &mut Position,
