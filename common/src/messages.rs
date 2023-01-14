@@ -1,15 +1,17 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{math::Vec2, GameArchetype, NetworkID};
+use crate::{math::Vec2, ClientMode, GameArchetype, NetworkID};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientMessage {
     // The String is the desired Username
     Connect(String),
-    MoveTo(Vec2),
     RequestArchetype(NetworkID),
     RequestEntityInfo(NetworkID, InfoRequestType),
     SendMessage(String),
+    MoveTo(Vec2),
+    IssueChallenge(NetworkID),
+    RespondToChallenge(NetworkID, bool),
     Disconnect,
 }
 
@@ -30,6 +32,8 @@ pub enum ServerMessage {
     DespawnNetworkedEntity(NetworkID),
     SendNetworkedEntityInfo(NetworkID, InfoSendType),
     SendMessage(String, String),
+    PassAlongChallenge(NetworkID),
+    ChangeClientMode(ClientMode),
     DisconnectClient(DisconnectReason),
 }
 

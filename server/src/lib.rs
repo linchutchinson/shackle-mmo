@@ -209,6 +209,12 @@ fn parse_incoming_packets(
                             error!("Someone requested an entity's info without being properly connected.");
                         }
                     }
+                    ClientMessage::IssueChallenge(target) => {
+                        unimplemented!()
+                    }
+                    ClientMessage::RespondToChallenge(target, accepted) => {
+                        unimplemented!()
+                    }
                 }
             }
             _ => {}

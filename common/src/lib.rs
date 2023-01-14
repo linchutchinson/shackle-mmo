@@ -26,3 +26,9 @@ impl From<NetworkID> for usize {
 pub enum GameArchetype {
     Player,
 }
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+pub enum ClientMode {
+    Overworld,
+    Battle,
+}

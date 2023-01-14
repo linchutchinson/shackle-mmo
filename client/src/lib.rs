@@ -99,6 +99,12 @@ impl Client {
                     ))
                     .expect("This should send.");
             }
+            ServerMessage::PassAlongChallenge(sender) => {
+                unimplemented!()
+            }
+            ServerMessage::ChangeClientMode(new_mode) => {
+                unimplemented!()
+            }
         });
 
         Ok(())
