@@ -23,6 +23,12 @@ pub struct Application {
     states: HashMap<AppState, Schedules>,
 }
 
+impl Default for Application {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Application {
     pub fn new() -> Self {
         let world = World::default();
@@ -63,10 +69,10 @@ impl Application {
 
         drop(next_state);
 
-        let schedules = self.states.get_mut(&self.current_state).expect(&format!(
-            "Missing schedules for state {:?}",
-            self.current_state,
-        ));
+        let schedules = self
+            .states
+            .get_mut(&self.current_state)
+            .unwrap_or_else(|| panic!("Missing schedules for state {:?}", self.current_state,));
 
         if run_enter_step {
             schedules
@@ -80,10 +86,10 @@ impl Application {
     }
 
     pub fn render(&mut self) {
-        let schedules = self.states.get_mut(&self.current_state).expect(&format!(
-            "Missing schedules for state {:?}",
-            self.current_state,
-        ));
+        let schedules = self
+            .states
+            .get_mut(&self.current_state)
+            .unwrap_or_else(|| panic!("Missing schedules for state {:?}", self.current_state,));
 
         schedules
             .render_schedule

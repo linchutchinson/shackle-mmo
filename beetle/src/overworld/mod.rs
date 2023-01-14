@@ -100,7 +100,7 @@ fn draw_chatlog(#[resource] chatlog: &ChatMessages) {
     chatlog.0.iter().rev().enumerate().for_each(|(idx, s)| {
         let y = screen_height - idx as f32 * 32.0 - 64.0;
 
-        draw_text(&s, 16.0, y, 24.0, BLACK);
+        draw_text(s, 16.0, y, 24.0, BLACK);
     });
 }
 
@@ -210,7 +210,7 @@ fn handle_client_events(
                     );
                     // FIXME: Do not pretend there are never network issues.
                     client
-                        .request_id_archetype(id.into())
+                        .request_id_archetype(id)
                         .expect("We just pretend there are never network issues.");
                 }
             }
@@ -236,11 +236,10 @@ fn request_names(_: &NeedsName, id: &NetworkID, #[resource] client: &mut Network
 #[system]
 fn handle_overworld_ui_events(
     #[resource] ui_event_channel: &OverworldUIEventChannel,
-    #[resource] client: &mut NetworkClient,
     #[resource] next_state: &mut NextState,
 ) {
     ui_event_channel.1.try_iter().for_each(|event| match event {
-        OverworldUIEvent::Challenge(id) => {
+        OverworldUIEvent::Challenge(_id) => {
             unimplemented!()
         }
         OverworldUIEvent::Logout => {

@@ -82,6 +82,16 @@ struct ClientInfo {
 
 pub struct NetworkedEntities(HashMap<NetworkID, (Entity, GameArchetype)>);
 
+/// Send the provided packet and write to log in the event of an
+/// error.
+fn logged_send(sender: &mut Sender<Packet>, packet: Packet) {
+    let result = sender.send(packet);
+
+    if let Err(err) = result {
+        log::error!("Encountered an error when sending packet: {err}");
+    }
+}
+
 #[system]
 fn parse_incoming_packets(
     #[state] next_id: &mut usize,
@@ -100,15 +110,15 @@ fn parse_incoming_packets(
 
                     let id = client_info.player_id;
 
-                    let chat_message = ServerMessage::SendMessage(format!("SERVER"), format!("{} has disconnected.", client_info.username));
+                    let chat_message = ServerMessage::SendMessage("SERVER".to_string(), format!("{} has disconnected.", client_info.username));
                     let delete_message = ServerMessage::DespawnNetworkedEntity(id);
 
                     clients.all_addresses().iter().for_each(|addr| {
                         let chat_packet = Packet::reliable_unordered(*addr, chat_message.to_payload());
                         let delete_packet = Packet::reliable_unordered(*addr, delete_message.to_payload());
 
-                        sender.send(chat_packet);
-                        sender.send(delete_packet);
+                        logged_send(sender, chat_packet);
+                        logged_send(sender, delete_packet);
                     });
                 }
             }
@@ -166,7 +176,7 @@ fn parse_incoming_packets(
                         }
                     }
                     ClientMessage::RequestArchetype(id) => {
-                        if let Some(_) = clients.addr_map.get(&packet.addr()) {
+                        if clients.addr_map.get(&packet.addr()).is_some() {
                             if let Some(_archetype) = networked_entities.0.get(&id) {
                                 let msg = ServerMessage::SpawnNetworkedEntity(
                                     id,
@@ -198,8 +208,8 @@ fn parse_incoming_packets(
                         }
                     }
                     ClientMessage::RequestEntityInfo(id, info) => {
-                        if let Some(_) = clients.addr_map.get(&packet.addr()) {
-                            if let Some(_) = networked_entities.0.get(&id) {
+                        if clients.addr_map.get(&packet.addr()).is_some() {
+                            if networked_entities.0.get(&id).is_some() {
                                 info!("Marking an entity to send its info to a client with ID {id:?}");
                                 commands.push((SendInfoRequest(id, packet.addr(), info),));
                             } else {
@@ -209,10 +219,10 @@ fn parse_incoming_packets(
                             error!("Someone requested an entity's info without being properly connected.");
                         }
                     }
-                    ClientMessage::IssueChallenge(target) => {
+                    ClientMessage::IssueChallenge(_target) => {
                         unimplemented!()
                     }
-                    ClientMessage::RespondToChallenge(target, accepted) => {
+                    ClientMessage::RespondToChallenge(_target, _accepted) => {
                         unimplemented!()
                     }
                 }

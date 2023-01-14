@@ -84,7 +84,7 @@ pub fn handle_text_input_input(
                 input.state = TextInputState::Focus;
                 // Clear existing char inputs
                 // FIXME This seems suspicious.
-                while let Some(_) = get_char_pressed() {}
+                while get_char_pressed().is_some() {}
             }
         }
         TextInputState::Focus => {
@@ -126,21 +126,18 @@ pub fn handle_text_input_submit_on_enter(
     submitter: &SubmitOnEnter,
     text: &mut Text,
 ) {
-    match input.state {
-        TextInputState::Focus => {
-            if is_key_pressed(macroquad::prelude::KeyCode::Enter) {
-                let result = submitter.0.send(text.0.clone());
-                text.0.clear();
+    if let TextInputState::Focus = input.state {
+        if is_key_pressed(macroquad::prelude::KeyCode::Enter) {
+            let result = submitter.0.send(text.0.clone());
+            text.0.clear();
 
-                if result.is_err() {
-                    log::error!(
-                        "There was an error submitting text from the selected input. {}",
-                        result.unwrap_err()
-                    );
-                }
+            if result.is_err() {
+                log::error!(
+                    "There was an error submitting text from the selected input. {}",
+                    result.unwrap_err()
+                );
             }
         }
-        _ => {}
     }
 }
 

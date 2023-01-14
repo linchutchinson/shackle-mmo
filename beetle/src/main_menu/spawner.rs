@@ -1,11 +1,11 @@
-use legion::{system, systems::CommandBuffer, world::SubWorld};
+use legion::{system, systems::CommandBuffer};
 
 use crate::{
     main_menu::event::{MainMenuEvent, NotificationDisplay},
     ui::{
         spawner::{
-            spawn_button, spawn_context_menu, spawn_dynamic_text, spawn_spacer, spawn_text_input,
-            spawn_ui_container, spawn_ui_panel,
+            spawn_button, spawn_dynamic_text, spawn_spacer, spawn_text_input, spawn_ui_container,
+            spawn_ui_panel,
         },
         FullscreenRoot, Spinner, UIConstraint, UIRoot, UISize,
     },
@@ -39,7 +39,9 @@ pub fn spawn_login_menu(commands: &mut CommandBuffer, event_handler: &MainMenuEv
         commands,
         "Log In",
         event_handler.event_sender(),
-        MainMenuEvent::LoginButtonClicked(username_input),
+        MainMenuEvent::ButtonClicked(crate::main_menu::event::MainMenuButton::Login(
+            username_input,
+        )),
     );
 
     let input_panel = spawn_ui_panel(commands, &[username_input, login_button]);
@@ -89,14 +91,14 @@ pub fn spawn_main_menu(
         commands,
         "Play",
         event_handler.event_sender(),
-        MainMenuEvent::PlayButtonClicked,
+        MainMenuEvent::ButtonClicked(crate::main_menu::event::MainMenuButton::Play),
     );
 
     let quit_button = spawn_button(
         commands,
         "Quit",
         event_handler.event_sender(),
-        MainMenuEvent::QuitButtonClicked,
+        MainMenuEvent::ButtonClicked(crate::main_menu::event::MainMenuButton::Quit),
     );
 
     let button_panel = spawn_ui_panel(commands, &[play_button, quit_button]);

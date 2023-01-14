@@ -20,6 +20,12 @@ pub struct Client<T: ConnectionInterface> {
     receiver: Receiver<ClientEvent>,
 }
 
+impl<T: ConnectionInterface> Default for Client<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: ConnectionInterface> Client<T> {
     pub fn new() -> Self {
         let (sender, receiver) = unbounded();
@@ -46,8 +52,8 @@ impl<T: ConnectionInterface> Client<T> {
             .0
             .send_message(ClientMessage::Connect(username.to_string()));
 
-        if result.is_err() {
-            return Err(ClientError::NetworkError(result.unwrap_err()));
+        if let Err(err) = result {
+            return Err(ClientError::NetworkError(err));
         }
 
         self.username = Some(username.to_string());
@@ -57,10 +63,10 @@ impl<T: ConnectionInterface> Client<T> {
 
     pub fn connection_status(&self) -> ConnectionStatus {
         if self.connection.is_none() {
-            return ConnectionStatus::NotConnected;
+            ConnectionStatus::NotConnected
         } else {
             let conn = self.connection.as_ref().unwrap();
-            return conn.1.clone();
+            conn.1.clone()
         }
     }
 
@@ -76,7 +82,7 @@ impl<T: ConnectionInterface> Client<T> {
             ServerMessage::ConnectionAccepted => conn.1 = ConnectionStatus::Connected,
             ServerMessage::DisconnectClient(reason) => {
                 self.username = None;
-                conn.1 = ConnectionStatus::Failed(reason.clone());
+                conn.1 = ConnectionStatus::Failed(*reason);
             }
             ServerMessage::SpawnNetworkedEntity(id, entity_type, is_owned) => {
                 self.sender
@@ -101,10 +107,10 @@ impl<T: ConnectionInterface> Client<T> {
                     ))
                     .expect("This should send.");
             }
-            ServerMessage::PassAlongChallenge(sender) => {
+            ServerMessage::PassAlongChallenge(_sender) => {
                 unimplemented!()
             }
-            ServerMessage::ChangeClientMode(new_mode) => {
+            ServerMessage::ChangeClientMode(_new_mode) => {
                 unimplemented!()
             }
         });

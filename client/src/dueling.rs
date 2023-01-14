@@ -13,20 +13,18 @@ pub trait DuelingClient {
 }
 
 impl<T: ConnectionInterface> DuelingClient for Client<T> {
-    fn send_challenge(&mut self, target_id: NetworkID) -> Result<(), ClientError> {
+    fn send_challenge(&mut self, _target_id: NetworkID) -> Result<(), ClientError> {
         unimplemented!()
     }
 
     fn respond_to_challenge(
         &mut self,
-        target_id: NetworkID,
-        response: bool,
+        _target_id: NetworkID,
+        _response: bool,
     ) -> Result<(), ClientError> {
         unimplemented!()
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-}
+mod tests {}

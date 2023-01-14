@@ -1,11 +1,8 @@
-use common::math::{Rect, Vec2};
+use common::math::Rect;
 use legion::{
     query::IntoQuery, system, systems::CommandBuffer, world::SubWorld, Entity, EntityStore,
 };
-use macroquad::{
-    prelude::{is_mouse_button_pressed, mouse_position},
-    window::{screen_height, screen_width},
-};
+use macroquad::window::{screen_height, screen_width};
 
 // TODO Add support for manually sized/positioned UI roots for windowing.
 pub struct UIRoot;
@@ -87,7 +84,7 @@ pub fn layout_ui(world: &mut SubWorld, commands: &mut CommandBuffer) {
     let mut root_query = <(&Rect, &UIContainer, &UIRoot)>::query();
 
     root_query.iter(world).for_each(|(rect, container, _)| {
-        calculate_and_apply_child_ui_sizes(*rect, container, &world, commands);
+        calculate_and_apply_child_ui_sizes(*rect, container, world, commands);
     });
 }
 

@@ -17,13 +17,12 @@ impl std::fmt::Display for ValidationError {
             Self::ContainsProfanity(profanity) => {
                 let formatted_profanity = profanity.join(", ");
                 format!(
-                    "The entered username contains the following disallowed words: [{}]",
-                    formatted_profanity
+                    "The entered username contains the following disallowed words: [{formatted_profanity}]",
                 )
             }
         };
 
-        write!(f, "{}", msg)
+        write!(f, "{msg}")
     }
 }
 
@@ -52,7 +51,7 @@ fn find_profanity(val: &str) -> Option<Vec<String>> {
     let lowercase_val = val.to_lowercase();
     let found_profanity: Vec<String> = prof_array
         .iter()
-        .filter(|profanity| lowercase_val.find(*profanity).is_some())
+        .filter(|profanity| lowercase_val.contains(*profanity))
         .map(|p| p.to_string())
         .collect();
 

@@ -3,9 +3,14 @@ use legion::Entity;
 
 #[derive(Copy, Clone)]
 pub enum MainMenuEvent {
-    PlayButtonClicked,
-    QuitButtonClicked,
-    LoginButtonClicked(Entity),
+    ButtonClicked(MainMenuButton),
+}
+
+#[derive(Copy, Clone)]
+pub enum MainMenuButton {
+    Play,
+    Quit,
+    Login(Entity),
 }
 
 #[derive(Clone)]

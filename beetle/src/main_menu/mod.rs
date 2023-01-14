@@ -16,7 +16,10 @@ use crate::{
 };
 
 use self::{
-    event::{MainMenuEvent, MainMenuEventHandler, MainMenuNotification, NotificationDisplay},
+    event::{
+        MainMenuButton, MainMenuEvent, MainMenuEventHandler, MainMenuNotification,
+        NotificationDisplay,
+    },
     spawner::{spawn_connecting_screen, spawn_login_menu, spawn_main_menu_system},
 };
 
@@ -60,7 +63,7 @@ fn display_notifications(notifications: &mut NotificationDisplay, text: &mut Tex
         .try_iter()
         .for_each(|notification| match notification {
             MainMenuNotification::Error(msg) => {
-                println!("{}", msg);
+                println!("{msg}");
                 text.0 = msg;
             }
         });
@@ -78,53 +81,57 @@ fn handle_main_menu_events(
 ) {
     let receiver = handler.event_receiver().clone();
     receiver.try_iter().for_each(|event| match event {
-        MainMenuEvent::PlayButtonClicked => {
-            // FIXME Currently this clears the current UI by removing everything. This seems prone to problems.
-            // So I'm going to think about it, as there's probably a more appropriate solution. Having a tag component for current
-            // UI elements feels clunky, but that may be due to the way I created the spawner code.
-            query.iter(world).for_each(|e| {
-                commands.remove(*e);
-            });
-            spawn_login_menu(commands, handler);
-        }
-        MainMenuEvent::QuitButtonClicked => {
-            next_state.0 = Some(crate::AppState::Quit);
-        }
-        MainMenuEvent::LoginButtonClicked(input_entity) => {
-            let entry = world
-                .entry_ref(input_entity)
-                .expect("The login button was not connected to an existing entity.");
+        MainMenuEvent::ButtonClicked(button) => {
+            match button {
+                MainMenuButton::Play => {
+                    // FIXME Currently this clears the current UI by removing everything. This seems prone to problems.
+                    // So I'm going to think about it, as there's probably a more appropriate solution. Having a tag component for current
+                    // UI elements feels clunky, but that may be due to the way I created the spawner code.
+                    query.iter(world).for_each(|e| {
+                        commands.remove(*e);
+                    });
+                    spawn_login_menu(commands, handler);
+                }
+                MainMenuButton::Quit => {
+                    next_state.0 = Some(crate::AppState::Quit);
+                }
+                MainMenuButton::Login(input_entity) => {
+                    let entry = world
+                        .entry_ref(input_entity)
+                        .expect("The login button was not connected to an existing entity.");
 
-            let text = entry
-                .get_component::<Text>()
-                .expect("The login button was connected to an entity without text.");
+                    let text = entry
+                        .get_component::<Text>()
+                        .expect("The login button was connected to an entity without text.");
 
-            let validity_check = validate_username(&text.0);
+                    let validity_check = validate_username(&text.0);
 
-            if validity_check.is_ok() {
-                // Log In
-                info!("Logging in with username: {}", text.0);
-                let connection_result = client.connect(&text.0);
+                    if validity_check.is_ok() {
+                        // Log In
+                        info!("Logging in with username: {}", text.0);
+                        let connection_result = client.connect(&text.0);
 
-                match connection_result {
-                    Ok(()) => {
-                        query.iter(world).for_each(|e| {
-                            commands.remove(*e);
-                        });
+                        match connection_result {
+                            Ok(()) => {
+                                query.iter(world).for_each(|e| {
+                                    commands.remove(*e);
+                                });
 
-                        spawn_connecting_screen(commands);
-                    }
-                    Err(err) => {
-                        // TODO: This should use display for user facing formatting instead of debug.
-                        let err_msg = format!("{:?}", err);
+                                spawn_connecting_screen(commands);
+                            }
+                            Err(err) => {
+                                // TODO: This should use display for user facing formatting instead of debug.
+                                let err_msg = format!("{err:?}");
+                                handler.send_notification(MainMenuNotification::Error(err_msg));
+                            }
+                        }
+                    } else {
+                        // Error Occurred...
+                        let err_msg = format!("{}", validity_check.as_ref().unwrap_err());
+                        error!("{}", validity_check.unwrap_err());
                         handler.send_notification(MainMenuNotification::Error(err_msg));
                     }
                 }
-            } else {
-                // Error Occurred...
-                let err_msg = format!("{}", validity_check.as_ref().unwrap_err());
-                error!("{}", validity_check.unwrap_err());
-                handler.send_notification(MainMenuNotification::Error(err_msg));
             }
         }
     });
@@ -152,15 +159,12 @@ fn join_server_when_connected(
     // So this result can safely be ignored.
     client.receive_messages().ok();
 
-    match client.connection_status() {
-        ConnectionStatus::Connected => {
-            // FIXME: Clearing all entities here is a weird temporary measure.
-            query.iter(world).for_each(|e| {
-                commands.remove(*e);
-            });
+    if let ConnectionStatus::Connected = client.connection_status() {
+        // FIXME: Clearing all entities here is a weird temporary measure.
+        query.iter(world).for_each(|e| {
+            commands.remove(*e);
+        });
 
-            next_state.0 = Some(crate::AppState::Overworld);
-        }
-        _ => {}
+        next_state.0 = Some(crate::AppState::Overworld);
     }
 }

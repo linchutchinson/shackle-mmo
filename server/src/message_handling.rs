@@ -19,7 +19,7 @@ pub fn handle_connect_message(
 
     // TODO: Also check for duplicates
     let validation_result = validate_username(username);
-    if let Ok(_) = validation_result {
+    if validation_result.is_ok() {
         info!("Connection accepted!");
         let txt = format!("{username} has connected");
 

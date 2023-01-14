@@ -47,12 +47,10 @@ pub fn handle_button_input<T: Send + Sync + Copy + 'static>(button: &mut Button<
         } else if !is_mouse_button_down(macroquad::prelude::MouseButton::Left) {
             button.state = ButtonState::Hover;
         }
-    } else {
-        if !(button.state == ButtonState::Click
-            && is_mouse_button_down(macroquad::prelude::MouseButton::Left))
-        {
-            button.state = ButtonState::Normal
-        }
+    } else if !(button.state == ButtonState::Click
+        && is_mouse_button_down(macroquad::prelude::MouseButton::Left))
+    {
+        button.state = ButtonState::Normal
     }
 }
 

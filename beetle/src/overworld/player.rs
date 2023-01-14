@@ -5,7 +5,7 @@ use common::{
 };
 use legion::{system, systems::CommandBuffer};
 use macroquad::{
-    prelude::{is_key_down, is_mouse_button_pressed, mouse_position, Color, BLACK, WHITE},
+    prelude::{is_key_down, is_mouse_button_pressed, mouse_position, Color, WHITE},
     text::{draw_text, measure_text},
     window::{screen_height, screen_width},
 };

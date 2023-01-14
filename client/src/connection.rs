@@ -69,19 +69,16 @@ impl ConnectionInterface for Connection {
         self.socket.manual_poll(Instant::now());
 
         while let Some(event) = self.socket.recv() {
-            match event {
-                SocketEvent::Packet(pck) => {
-                    let msg_result = ServerMessage::from_payload(pck.payload().into());
+            if let SocketEvent::Packet(pck) = event {
+                let msg_result = ServerMessage::from_payload(pck.payload());
 
-                    if let Ok(msg) = msg_result {
-                        log::info!("Received Message: {msg:?}");
-                        result.push(msg);
-                    } else {
-                        let err = msg_result.unwrap_err();
-                        log::error!("Received an invalid packet from the server. {err}");
-                    }
+                if let Ok(msg) = msg_result {
+                    log::info!("Received Message: {msg:?}");
+                    result.push(msg);
+                } else {
+                    let err = msg_result.unwrap_err();
+                    log::error!("Received an invalid packet from the server. {err}");
                 }
-                _ => {}
             }
         }
 

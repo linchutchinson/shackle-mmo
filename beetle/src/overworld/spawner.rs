@@ -1,13 +1,11 @@
 use client::NetworkClient;
 use common::PLAY_AREA_SIZE;
-use crossbeam_channel::unbounded;
 use legion::{system, systems::CommandBuffer, Entity};
 use macroquad::prelude::{GREEN, WHITE};
 
 use crate::ui::{
     spawner::{
-        spawn_button, spawn_context_menu, spawn_dynamic_text, spawn_spacer, spawn_text_input,
-        spawn_ui_container,
+        spawn_button, spawn_dynamic_text, spawn_spacer, spawn_text_input, spawn_ui_container,
     },
     FullscreenRoot, SubmitOnEnter, UIRoot, UISize,
 };
