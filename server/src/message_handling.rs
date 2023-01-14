@@ -1,4 +1,4 @@
-use common::{validation::validate_username, GameArchetype, NetworkID, ServerMessage};
+use common::{messages::ServerMessage, validation::validate_username, GameArchetype, NetworkID};
 use crossbeam_channel::Sender;
 use laminar::Packet;
 use legion::systems::CommandBuffer;
@@ -75,7 +75,8 @@ pub fn handle_connect_message(
         // Disallowed username. Send a rejection message.
         info!("Rejecting Invalid Username");
 
-        let msg = ServerMessage::DisconnectClient(common::DisconnectReason::InvalidUsername);
+        let msg =
+            ServerMessage::DisconnectClient(common::messages::DisconnectReason::InvalidUsername);
         let addr = packet.addr();
         let msg_packet = Packet::reliable_unordered(addr, msg.to_payload());
         sender.send(msg_packet).expect("This should send.");

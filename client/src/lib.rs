@@ -1,10 +1,12 @@
 mod connection;
+mod dueling;
 use connection::Connection;
 pub use connection::ConnectionStatus;
 
 use common::{
-    math::Vec2, ClientMessage, GameArchetype, InfoRequestType, InfoSendType, NetworkID,
-    ServerMessage,
+    math::Vec2,
+    messages::{ClientMessage, InfoRequestType, InfoSendType, ServerMessage},
+    GameArchetype, NetworkID,
 };
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use laminar::ErrorKind;

@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use common::{ClientMessage, DisconnectReason, ServerMessage};
+use common::messages::{ClientMessage, DisconnectReason, ServerMessage};
 use laminar::{Config, ErrorKind, Packet, Socket, SocketEvent};
 
 #[derive(Clone)]

@@ -4,7 +4,11 @@ mod spawner;
 use std::collections::{HashMap, VecDeque};
 
 use client::{Client, ClientEvent};
-use common::{math::Vec2, GameArchetype, InfoRequestType, InfoSendType, NetworkID, PLAY_AREA_SIZE};
+use common::{
+    math::Vec2,
+    messages::{InfoRequestType, InfoSendType},
+    GameArchetype, NetworkID, PLAY_AREA_SIZE,
+};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use legion::{system, systems::CommandBuffer, Entity, Schedule};
 use macroquad::{

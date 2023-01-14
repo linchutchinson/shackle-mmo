@@ -3,8 +3,8 @@ mod message_handling;
 use std::{collections::HashMap, net::SocketAddr, thread, time::Duration};
 
 use common::{
-    ClientMessage, GameArchetype, InfoRequestType, InfoSendType, NetworkID, ServerMessage,
-    PLAY_AREA_SIZE,
+    messages::{ClientMessage, InfoRequestType, InfoSendType, ServerMessage},
+    GameArchetype, NetworkID, PLAY_AREA_SIZE,
 };
 use crossbeam_channel::{Receiver, Sender};
 use laminar::{Config, ErrorKind, Packet, Socket, SocketEvent};
