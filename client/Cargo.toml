@@ -3,7 +3,9 @@ name = "client"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = []
+test_client = []
 
 [dependencies]
 common = { path = "../common" }
@@ -11,3 +13,6 @@ common = { path = "../common" }
 laminar = "0.5"
 crossbeam-channel = "0.5"
 log = "0.4"
+
+[dev-dependencies]
+client = { path = ".", features = ["test_client"] }

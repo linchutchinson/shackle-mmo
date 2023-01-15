@@ -1,5 +1,6 @@
 mod connection;
 mod dueling;
+pub mod functionality;
 pub use connection::ConnectionStatus;
 use connection::{Connection, ConnectionInterface};
 
@@ -183,7 +184,7 @@ pub enum ClientEvent {
     MessageReceived(String, String),
 }
 
-#[cfg(test)]
+#[cfg(feature = "test_client")]
 pub mod test_utils {
     use super::*;
 
@@ -207,6 +208,7 @@ pub mod test_utils {
         server_message_channel: (Sender<ServerMessage>, Receiver<ServerMessage>),
     }
 
+    /*
     impl TestConnection {
         fn fake_server_message(&self, msg: ServerMessage) {
             self.server_message_channel
@@ -215,6 +217,7 @@ pub mod test_utils {
                 .expect("This always works.");
         }
     }
+    */
 
     impl ConnectionInterface for TestConnection {
         fn new() -> Result<Self, ErrorKind> {
