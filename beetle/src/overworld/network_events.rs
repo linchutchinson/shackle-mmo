@@ -68,5 +68,8 @@ pub fn handle_client_events(
                 log::info!("Received Message: {text} from {author}");
                 chat_messages.add_message(&author, &text);
             }
+            ClientEvent::ChallengeReceived(sender) => {
+                log::info!("Challenged to a duel by entity with net id {sender:?}.");
+            }
         });
 }

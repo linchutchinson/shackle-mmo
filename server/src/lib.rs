@@ -219,8 +219,24 @@ fn parse_incoming_packets(
                             error!("Someone requested an entity's info without being properly connected.");
                         }
                     }
-                    ClientMessage::IssueChallenge(_target) => {
-                        unimplemented!()
+                    ClientMessage::IssueChallenge(target) => {
+                        if let Some(sender_info) = clients.addr_map.get(&packet.addr())  {
+                            if let Some((addr, info)) = clients.addr_map.iter().find(|(_, info)| info.player_id == target )  {
+                                let msg = ServerMessage::PassAlongChallenge(sender_info.player_id);
+                                let challenge_packet = Packet::reliable_unordered(*addr, msg.to_payload());
+                                logged_send(sender, challenge_packet);
+
+                                let chat_msg = ServerMessage::SendMessage("SERVER".to_string(), format!("{} has challenged {} to a duel!", sender_info.username, info.username));
+                                clients.all_addresses().iter().for_each(|addr| {
+                                    let chat_packet = Packet::reliable_unordered(*addr, chat_msg.to_payload());
+                                    logged_send(sender, chat_packet);
+                                });
+                            } else {
+                                error!("Challenged an entity that doesn't exist. {target:?}");
+                            }
+                        } else {
+                            error!("Someone requested an entity's info without being properly connected.");
+                        }
                     }
                     ClientMessage::RespondToChallenge(_target, _accepted) => {
                         unimplemented!()

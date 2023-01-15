@@ -104,8 +104,10 @@ impl<T: ConnectionInterface> Client<T> {
                     ))
                     .expect("This should send.");
             }
-            ServerMessage::PassAlongChallenge(_sender) => {
-                unimplemented!()
+            ServerMessage::PassAlongChallenge(sender) => {
+                self.sender
+                    .send(ClientEvent::ChallengeReceived(*sender))
+                    .expect("This should send.");
             }
             ServerMessage::ChangeClientMode(_new_mode) => {
                 unimplemented!()
@@ -182,6 +184,7 @@ pub enum ClientEvent {
     DespawnEntity(NetworkID),
     UpdateEntityInfo(NetworkID, InfoSendType),
     MessageReceived(String, String),
+    ChallengeReceived(NetworkID),
 }
 
 #[cfg(feature = "test_client")]
