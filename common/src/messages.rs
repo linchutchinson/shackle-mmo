@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{math::Vec2, ClientMode, GameArchetype, NetworkID};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum ClientMessage {
     // The String is the desired Username
     Connect(String),
@@ -47,7 +47,7 @@ impl ServerMessage {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum InfoRequestType {
     Identity,
 }

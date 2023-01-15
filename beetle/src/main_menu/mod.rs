@@ -143,7 +143,7 @@ fn init_main_menu_resources(commands: &mut CommandBuffer) {
         let event_handler = MainMenuEventHandler::new();
         resources.insert(event_handler);
         resources.insert(ClearColor(DARKBLUE));
-        resources.insert(NetworkClient::new());
+        resources.insert(NetworkClient::default());
     });
 }
 

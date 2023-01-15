@@ -22,12 +22,6 @@ pub struct Client<T: ConnectionInterface> {
 
 impl<T: ConnectionInterface> Default for Client<T> {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<T: ConnectionInterface> Client<T> {
-    pub fn new() -> Self {
         let (sender, receiver) = unbounded();
         Self {
             connection: None,
@@ -36,7 +30,9 @@ impl<T: ConnectionInterface> Client<T> {
             receiver,
         }
     }
+}
 
+impl<T: ConnectionInterface> Client<T> {
     pub fn connect(&mut self, username: &str) -> Result<(), ClientError> {
         if self.connection.is_some() {
             return Err(ClientError::DuplicateConnectionError);
@@ -190,10 +186,59 @@ pub enum ClientEvent {
 #[cfg(test)]
 pub mod test_utils {
     use super::*;
+
+    pub type TestClient = Client<TestConnection>;
+
+    impl TestClient {
+        pub fn already_connected() -> Self {
+            let mut result = Self::default();
+            result.connect("TestUser").expect("This always works.");
+            result
+        }
+
+        pub fn get_sent_messages(&mut self) -> Vec<ClientMessage> {
+            let conn = self.get_connection_mut().expect("Client always exists.");
+            conn.client_message_channel.1.try_iter().collect()
+        }
+    }
+
+    pub struct TestConnection {
+        client_message_channel: (Sender<ClientMessage>, Receiver<ClientMessage>),
+        server_message_channel: (Sender<ServerMessage>, Receiver<ServerMessage>),
+    }
+
+    impl TestConnection {
+        fn fake_server_message(&self, msg: ServerMessage) {
+            self.server_message_channel
+                .0
+                .send(msg)
+                .expect("This always works.");
+        }
+    }
+
+    impl ConnectionInterface for TestConnection {
+        fn new() -> Result<Self, ErrorKind> {
+            let client_message_channel = unbounded();
+            let server_message_channel = unbounded();
+            Ok(Self {
+                client_message_channel,
+                server_message_channel,
+            })
+        }
+
+        fn send_message(&mut self, message: ClientMessage) -> Result<(), ErrorKind> {
+            self.client_message_channel
+                .0
+                .send(message)
+                .expect("This always sends");
+            Ok(())
+        }
+
+        fn receive_messages(&mut self) -> Vec<ServerMessage> {
+            self.server_message_channel.1.try_iter().collect()
+        }
+    }
 }
 
 #[cfg(test)]
-mod test {
-    use super::test_utils::*;
-    use super::*;
-}
+mod test {}
