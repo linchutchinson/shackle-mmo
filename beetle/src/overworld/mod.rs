@@ -1,6 +1,7 @@
 mod network_events;
 mod player;
 mod spawner;
+mod ui_events;
 
 use std::collections::{HashMap, VecDeque};
 
@@ -18,7 +19,7 @@ use macroquad::{
 use crate::{
     draw_clear_color_system,
     ui::{add_ui_layout_systems, add_ui_rendering_systems},
-    ClearColor, NextState, Schedules,
+    ClearColor, Schedules,
 };
 
 use self::{
@@ -28,16 +29,10 @@ use self::{
         spawn_context_menu_when_rclicked_system, NeedsName,
     },
     spawner::{spawn_overworld_entities_system, spawn_overworld_ui_system},
+    ui_events::{handle_overworld_ui_events_system, OverworldUIEvent, OverworldUIEventChannel},
 };
 
 pub struct ChatMessageChannel(pub Sender<String>, pub Receiver<String>);
-pub struct OverworldUIEventChannel(pub Sender<OverworldUIEvent>, pub Receiver<OverworldUIEvent>);
-
-#[derive(Copy, Clone)]
-pub enum OverworldUIEvent {
-    Challenge(NetworkID),
-    Logout,
-}
 
 pub fn overworld_schedules() -> Schedules {
     let enter_schedule = Schedule::builder()
@@ -162,19 +157,4 @@ fn request_names(_: &NeedsName, id: &NetworkID, #[resource] client: &mut Network
             result.unwrap_err()
         );
     }
-}
-
-#[system]
-fn handle_overworld_ui_events(
-    #[resource] ui_event_channel: &OverworldUIEventChannel,
-    #[resource] next_state: &mut NextState,
-) {
-    ui_event_channel.1.try_iter().for_each(|event| match event {
-        OverworldUIEvent::Challenge(_id) => {
-            unimplemented!()
-        }
-        OverworldUIEvent::Logout => {
-            next_state.0 = Some(crate::AppState::MainMenu);
-        }
-    });
 }

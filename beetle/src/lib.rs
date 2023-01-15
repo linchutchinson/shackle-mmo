@@ -106,7 +106,7 @@ enum AppState {
     Quit,
 }
 
-struct NextState(Option<AppState>);
+pub struct NextState(Option<AppState>);
 
 pub struct Schedules {
     enter_schedule: Schedule,
