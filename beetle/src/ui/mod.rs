@@ -14,7 +14,6 @@ use legion::EntityStore;
 use legion::Query;
 use legion::TryRead;
 use macroquad::prelude::is_mouse_button_pressed;
-use macroquad::prelude::mouse_position;
 use macroquad::prelude::RED;
 use macroquad::shapes::draw_rectangle_lines;
 pub use spinner::Spinner;
@@ -40,7 +39,7 @@ use self::{
 // TODO UI Schedules should use a stack resource to handle UI ordering
 // as well as input handling.
 
-pub struct DeleteOnClickOff;
+pub struct DeleteOnClick;
 
 pub fn add_ui_layout_systems<T: Send + Sync + Copy + 'static>(builder: &mut Builder) {
     builder
@@ -53,7 +52,7 @@ pub fn add_ui_layout_systems<T: Send + Sync + Copy + 'static>(builder: &mut Buil
         .add_system(calculate_dynamic_font_size_system())
         .add_system(rotate_spinner_system())
         .add_system(handle_text_input_submit_on_enter_system())
-        .add_system(delete_on_click_off_system())
+        .add_system(delete_on_click_system())
         .flush();
 }
 
@@ -99,24 +98,20 @@ fn render_rect_lightener(rect: &Rect, _: &UILayer) {
 
 #[system]
 #[read_component(Rect)]
-fn delete_on_click_off(
+fn delete_on_click(
     world: &mut SubWorld,
-    query: &mut Query<(Entity, &Rect, &DeleteOnClickOff, TryRead<UIContainer>)>,
+    query: &mut Query<(Entity, &DeleteOnClick, TryRead<UIContainer>)>,
     commands: &mut CommandBuffer,
 ) {
     if is_mouse_button_pressed(macroquad::prelude::MouseButton::Left)
         || is_mouse_button_pressed(macroquad::prelude::MouseButton::Right)
     {
-        query.iter(world).for_each(|(e, rect, _, container)| {
-            println!("Checking mouse pos.");
-            let mouse_pos = mouse_position().into();
-            if !rect.contains(mouse_pos) {
-                println!("Deleting container.");
-                if let Some(c) = container {
-                    delete_container_children_recursive(world, c, commands);
-                }
-                commands.remove(*e)
+        query.iter(world).for_each(|(e, _, container)| {
+            println!("Deleting container.");
+            if let Some(c) = container {
+                delete_container_children_recursive(world, c, commands);
             }
+            commands.remove(*e)
         });
     }
 }

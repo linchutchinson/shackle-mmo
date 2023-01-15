@@ -43,6 +43,7 @@ pub fn overworld_schedules() -> Schedules {
         .build();
 
     let mut tick_sbuilder = Schedule::builder();
+    add_ui_layout_systems::<OverworldUIEvent>(&mut tick_sbuilder);
     tick_sbuilder
         .add_system(handle_client_events_system())
         .add_system(handle_overworld_ui_events_system())
@@ -51,7 +52,6 @@ pub fn overworld_schedules() -> Schedules {
         .add_system(handle_sending_messages_system())
         .add_system(spawn_context_menu_when_rclicked_system())
         .add_system(request_names_system());
-    add_ui_layout_systems::<OverworldUIEvent>(&mut tick_sbuilder);
     let tick_schedule = tick_sbuilder.build();
 
     let mut render_sbuilder = Schedule::builder();
