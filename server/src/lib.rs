@@ -72,12 +72,27 @@ impl ClientList {
         let keys = self.addr_map.clone().into_keys();
         keys.collect()
     }
+
+    fn get_by_netid(&self, id: NetworkID) -> Option<(&SocketAddr, &ClientInfo)> {
+        self.addr_map.iter().find(|(_, info)| info.player_id == id)
+    }
 }
 
 #[derive(Clone)]
 struct ClientInfo {
     username: String,
     player_id: NetworkID,
+    challenge_target: Option<NetworkID>,
+}
+
+impl ClientInfo {
+    fn new(username: &str, player_id: NetworkID) -> Self {
+        Self {
+            username: username.to_string(),
+            player_id,
+            challenge_target: None,
+        }
+    }
 }
 
 pub struct NetworkedEntities(HashMap<NetworkID, (Entity, GameArchetype)>);
@@ -232,6 +247,8 @@ fn parse_incoming_packets(
                                     let chat_packet = Packet::reliable_unordered(*addr, chat_msg.to_payload());
                                     logged_send(sender, chat_packet);
                                 });
+
+                                clients.addr_map.get_mut(&packet.addr()).unwrap().challenge_target = Some(target);
                             } else {
                                 error!("Challenged an entity that doesn't exist. {target:?}");
                             }
@@ -239,8 +256,27 @@ fn parse_incoming_packets(
                             error!("Someone requested an entity's info without being properly connected.");
                         }
                     }
-                    ClientMessage::RespondToChallenge(_target, _accepted) => {
-                        unimplemented!()
+                    ClientMessage::RespondToChallenge(target, _accepted) => {
+                        let sender_info = clients.addr_map.get(&packet.addr());
+                        if let Some(sender_info) = sender_info {
+                            let mut success = false;
+                            if let Some((target_addr, target_info)) = clients.get_by_netid(target) {
+                                if target_info.challenge_target == Some(sender_info.player_id) {
+                                    success = true;
+                                    clients.addr_map.get_mut(&target_addr.clone()).unwrap().challenge_target = None;
+                                    clients.addr_map.get_mut(&packet.addr()).unwrap().challenge_target = None;
+                                    println!("Two players have begun a duel!");
+                                }
+                            }
+
+                            if !success {
+                                let err_msg = ServerMessage::SendMessage("SERVER".to_string(), "Duel Cancelled -- The other player may have disconnected or challenged someone else.".to_string());
+                                let error_message_packet = Packet::reliable_unordered(packet.addr(), err_msg.to_payload());
+                                logged_send(sender, error_message_packet);
+                            }
+                        } else {
+                            error!("Someone tried to respond to a challenge without being connected!");
+                        }
                     }
                 }
             }

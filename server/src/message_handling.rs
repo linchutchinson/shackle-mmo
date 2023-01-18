@@ -26,13 +26,9 @@ pub fn handle_connect_message(
         // Connect user successfully
         let player_id = NetworkID::new(*next_id);
         *next_id += 1;
-        clients.addr_map.insert(
-            packet.addr(),
-            ClientInfo {
-                username: username.to_string(),
-                player_id,
-            },
-        );
+        clients
+            .addr_map
+            .insert(packet.addr(), ClientInfo::new(username, player_id));
 
         let msg = ServerMessage::ConnectionAccepted;
         let addr = packet.addr();
