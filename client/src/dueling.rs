@@ -21,10 +21,12 @@ impl<T: ConnectionInterface> DuelingClient for Client<T> {
 
     fn respond_to_challenge(
         &mut self,
-        _target_id: NetworkID,
-        _response: bool,
+        target_id: NetworkID,
+        response: bool,
     ) -> Result<(), ClientError> {
-        unimplemented!()
+        let conn = self.get_connection_mut()?;
+        conn.send_message(ClientMessage::RespondToChallenge(target_id, response))?;
+        Ok(())
     }
 }
 

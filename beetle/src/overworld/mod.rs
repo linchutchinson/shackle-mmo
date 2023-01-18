@@ -6,7 +6,11 @@ mod ui_events;
 use std::collections::{HashMap, VecDeque};
 
 use client::NetworkClient;
-use common::{math::Vec2, messages::InfoRequestType, NetworkID, PLAY_AREA_SIZE};
+use common::{
+    math::{Rect, Vec2},
+    messages::InfoRequestType,
+    NetworkID, PLAY_AREA_SIZE,
+};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use legion::{system, systems::CommandBuffer, world::SubWorld, Entity, Query, Schedule};
 use macroquad::{
@@ -38,12 +42,12 @@ use self::{
 
 pub struct ChatMessageChannel(pub Sender<String>, pub Receiver<String>);
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum OverworldNotification {
     ReceivedChallenge(NetworkID),
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct OverworldNotifications(VecDeque<OverworldNotification>);
 
 pub fn overworld_schedules() -> Schedules {
@@ -178,6 +182,7 @@ fn request_names(_: &NeedsName, id: &NetworkID, #[resource] client: &mut Network
 pub struct NotificationUIRoot(Option<OverworldNotification>);
 
 #[system]
+#[read_component(Rect)]
 fn update_notification(
     world: &mut SubWorld,
     notif_query: &mut Query<(Entity, &NotificationUIRoot, &UIContainer)>,
@@ -188,54 +193,50 @@ fn update_notification(
     notif_query
         .iter(world)
         .for_each(|(entity, root, container)| {
-            if !notifications.0.is_empty() {
-                let current = notifications.0.get(0);
+            let current = notifications.0.get(0);
+            if current.copied() != root.0 {
+                commands.add_component(*entity, NotificationUIRoot(current.copied()));
+                commands.remove_component::<UILayer>(*entity);
+                UIContainer::recursive_delete_children(world, container, commands);
+                commands.add_component(*entity, container.with_children(&[]));
 
-                if current.copied() != root.0 {
-                    commands.add_component(*entity, NotificationUIRoot(current.copied()));
-                    commands.remove_component::<UILayer>(*entity);
-                    UIContainer::recursive_delete_children(world, container, commands);
+                if let Some(notif) = current {
+                    match notif {
+                        // TODO: I want this to display the challenging user's name.
+                        // But that might be annoying so I'm leaving it for now.
+                        OverworldNotification::ReceivedChallenge(challenger) => {
+                            commands.add_component(*entity, UILayer);
 
-                    if let Some(notif) = current {
-                        match notif {
-                            OverworldNotification::ReceivedChallenge(_challenger) => {
-                                commands.add_component(*entity, UILayer);
+                            let top_padding = spawn_spacer(commands);
 
-                                let top_padding = spawn_spacer(commands);
+                            let text =
+                                spawn_dynamic_text(commands, "You have been challenged to a duel!");
+                            let accept_button = spawn_button(
+                                commands,
+                                "Accept",
+                                overworld_event_channel.0.clone(),
+                                OverworldUIEvent::ChallengeResponse(*challenger, true),
+                            );
+                            let reject_button = spawn_button(
+                                commands,
+                                "Reject",
+                                overworld_event_channel.0.clone(),
+                                OverworldUIEvent::ChallengeResponse(*challenger, false),
+                            );
 
-                                let text = spawn_dynamic_text(
-                                    commands,
-                                    "You have been challenged to a duel!",
-                                );
-                                let accept_button = spawn_button(
-                                    commands,
-                                    "Accept",
-                                    overworld_event_channel.0.clone(),
-                                    OverworldUIEvent::Logout,
-                                );
-                                let reject_button = spawn_button(
-                                    commands,
-                                    "Reject",
-                                    overworld_event_channel.0.clone(),
-                                    OverworldUIEvent::Logout,
-                                );
+                            let inner_panel =
+                                spawn_ui_container(commands, &[text, accept_button, reject_button]);
+                            commands.add_component(inner_panel, UILayer);
+                            let bottom_padding = spawn_spacer(commands);
 
-                                let inner_panel = spawn_ui_container(
-                                    commands,
-                                    &[text, accept_button, reject_button],
-                                );
-                                commands.add_component(inner_panel, UILayer);
-                                let bottom_padding = spawn_spacer(commands);
-
-                                commands.add_component(
-                                    *entity,
-                                    container.with_children(&[
-                                        top_padding,
-                                        inner_panel,
-                                        bottom_padding,
-                                    ]),
-                                );
-                            }
+                            commands.add_component(
+                                *entity,
+                                container.with_children(&[
+                                    top_padding,
+                                    inner_panel,
+                                    bottom_padding,
+                                ]),
+                            );
                         }
                     }
                 }

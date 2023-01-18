@@ -121,12 +121,13 @@ fn delete_container_children_recursive(
     commands: &mut CommandBuffer,
 ) {
     container.children.iter().for_each(|e| {
+        println!("Deleting {e:?}");
+        commands.remove(*e);
         if let Ok(r) = world.entry_ref(*e) {
             let has_container = r.get_component::<UIContainer>();
             if let Ok(child_container) = has_container {
                 delete_container_children_recursive(world, child_container, commands);
             }
-            commands.remove(*e);
         }
     });
 }
