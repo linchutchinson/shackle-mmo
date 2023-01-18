@@ -5,8 +5,7 @@ mod text;
 
 pub mod spawner;
 
-use container::UIContainer;
-pub use container::{FullscreenRoot, UIConstraint, UIRoot, UISize};
+pub use container::{FullscreenRoot, UIConstraint, UIContainer, UIRoot, UISize};
 use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
 use legion::Entity;
@@ -82,7 +81,7 @@ fn render_rect_outlines(rect: &Rect) {
     );
 }
 
-struct UILayer;
+pub struct UILayer;
 
 #[system(for_each)]
 fn render_rect_lightener(rect: &Rect, _: &UILayer) {

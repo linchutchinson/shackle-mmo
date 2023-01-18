@@ -131,6 +131,7 @@ fn parse_incoming_packets(
 
                 match msg.unwrap() {
                     ClientMessage::Connect(username) => {
+                        println!("Connecting client: {username}...");
                         handle_connect_message(
                             &username,
                             next_id,

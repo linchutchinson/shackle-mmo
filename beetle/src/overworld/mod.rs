@@ -8,7 +8,7 @@ use std::collections::{HashMap, VecDeque};
 use client::NetworkClient;
 use common::{math::Vec2, messages::InfoRequestType, NetworkID, PLAY_AREA_SIZE};
 use crossbeam_channel::{unbounded, Receiver, Sender};
-use legion::{system, systems::CommandBuffer, Entity, Schedule};
+use legion::{system, systems::CommandBuffer, world::SubWorld, Entity, Query, Schedule};
 use macroquad::{
     prelude::{Color, BLACK, DARKBROWN},
     shapes::draw_rectangle,
@@ -18,7 +18,11 @@ use macroquad::{
 
 use crate::{
     draw_clear_color_system,
-    ui::{add_ui_layout_systems, add_ui_rendering_systems},
+    ui::{
+        add_ui_layout_systems, add_ui_rendering_systems,
+        spawner::{spawn_button, spawn_dynamic_text, spawn_spacer, spawn_ui_container},
+        UIContainer, UILayer,
+    },
     ClearColor, Schedules,
 };
 
@@ -33,6 +37,14 @@ use self::{
 };
 
 pub struct ChatMessageChannel(pub Sender<String>, pub Receiver<String>);
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum OverworldNotification {
+    ReceivedChallenge(NetworkID),
+}
+
+#[derive(Default)]
+pub struct OverworldNotifications(VecDeque<OverworldNotification>);
 
 pub fn overworld_schedules() -> Schedules {
     let enter_schedule = Schedule::builder()
@@ -51,7 +63,8 @@ pub fn overworld_schedules() -> Schedules {
         .add_system(move_player_system())
         .add_system(handle_sending_messages_system())
         .add_system(spawn_context_menu_when_rclicked_system())
-        .add_system(request_names_system());
+        .add_system(request_names_system())
+        .add_system(update_notification_system());
     let tick_schedule = tick_sbuilder.build();
 
     let mut render_sbuilder = Schedule::builder();
@@ -141,6 +154,8 @@ fn initialize_overworld_resources(commands: &mut CommandBuffer) {
 
         let (s, r) = unbounded();
         resources.insert(OverworldUIEventChannel(s, r));
+
+        resources.insert(OverworldNotifications::default())
     });
 }
 
@@ -157,4 +172,73 @@ fn request_names(_: &NeedsName, id: &NetworkID, #[resource] client: &mut Network
             result.unwrap_err()
         );
     }
+}
+
+#[derive(Default)]
+pub struct NotificationUIRoot(Option<OverworldNotification>);
+
+#[system]
+fn update_notification(
+    world: &mut SubWorld,
+    notif_query: &mut Query<(Entity, &NotificationUIRoot, &UIContainer)>,
+    #[resource] notifications: &OverworldNotifications,
+    #[resource] overworld_event_channel: &OverworldUIEventChannel,
+    commands: &mut CommandBuffer,
+) {
+    notif_query
+        .iter(world)
+        .for_each(|(entity, root, container)| {
+            if !notifications.0.is_empty() {
+                let current = notifications.0.get(0);
+
+                if current.copied() != root.0 {
+                    commands.add_component(*entity, NotificationUIRoot(current.copied()));
+                    commands.remove_component::<UILayer>(*entity);
+                    UIContainer::recursive_delete_children(world, container, commands);
+
+                    if let Some(notif) = current {
+                        match notif {
+                            OverworldNotification::ReceivedChallenge(_challenger) => {
+                                commands.add_component(*entity, UILayer);
+
+                                let top_padding = spawn_spacer(commands);
+
+                                let text = spawn_dynamic_text(
+                                    commands,
+                                    "You have been challenged to a duel!",
+                                );
+                                let accept_button = spawn_button(
+                                    commands,
+                                    "Accept",
+                                    overworld_event_channel.0.clone(),
+                                    OverworldUIEvent::Logout,
+                                );
+                                let reject_button = spawn_button(
+                                    commands,
+                                    "Reject",
+                                    overworld_event_channel.0.clone(),
+                                    OverworldUIEvent::Logout,
+                                );
+
+                                let inner_panel = spawn_ui_container(
+                                    commands,
+                                    &[text, accept_button, reject_button],
+                                );
+                                commands.add_component(inner_panel, UILayer);
+                                let bottom_padding = spawn_spacer(commands);
+
+                                commands.add_component(
+                                    *entity,
+                                    container.with_children(&[
+                                        top_padding,
+                                        inner_panel,
+                                        bottom_padding,
+                                    ]),
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        })
 }

@@ -4,6 +4,8 @@ use legion::{
 };
 use macroquad::window::{screen_height, screen_width};
 
+use super::delete_container_children_recursive;
+
 // TODO Add support for manually sized/positioned UI roots for windowing.
 pub struct UIRoot;
 pub struct FullscreenRoot;
@@ -27,6 +29,15 @@ impl Default for UIContainer {
 }
 
 impl UIContainer {
+    // NOTE: This requires that the given subworld have the right component access.
+    pub fn recursive_delete_children(
+        world: &SubWorld,
+        container: &UIContainer,
+        commands: &mut CommandBuffer,
+    ) {
+        delete_container_children_recursive(world, container, commands)
+    }
+
     pub fn with_margin(&self, margin: f32) -> Self {
         Self {
             children: self.children.clone(),

@@ -12,7 +12,7 @@ use crate::ui::{
 
 use super::{
     player::{Controller, HoverName, NeedsName, OtherPlayer, Player, WorldDisplay},
-    ChatMessageChannel, OverworldUIEvent, OverworldUIEventChannel, Position,
+    ChatMessageChannel, NotificationUIRoot, OverworldUIEvent, OverworldUIEventChannel, Position,
 };
 
 #[system]
@@ -51,6 +51,11 @@ pub fn spawn_overworld_ui(
     );
     commands.add_component(root_container, UIRoot);
     commands.add_component(root_container, FullscreenRoot);
+
+    let notification_container = spawn_ui_container(commands, &[]);
+    commands.add_component(notification_container, UIRoot);
+    commands.add_component(notification_container, FullscreenRoot);
+    commands.add_component(notification_container, NotificationUIRoot::default());
 }
 
 #[system]

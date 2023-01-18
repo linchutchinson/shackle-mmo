@@ -1,7 +1,7 @@
 use super::{
     player::{HoverName, NeedsName},
     spawner::{spawn_local_player, spawn_remote_player},
-    ChatMessages, NetworkedEntities, Position,
+    ChatMessages, NetworkedEntities, OverworldNotifications, Position,
 };
 use client::{ClientEvent, NetworkClient};
 use common::{messages::InfoSendType, GameArchetype};
@@ -12,6 +12,7 @@ pub fn handle_client_events(
     #[resource] networked_entities: &mut NetworkedEntities,
     #[resource] client: &mut NetworkClient,
     #[resource] chat_messages: &mut ChatMessages,
+    #[resource] notifications: &mut OverworldNotifications,
     commands: &mut CommandBuffer,
 ) {
     client.receive_messages().expect("This should succeed.");
@@ -51,8 +52,7 @@ pub fn handle_client_events(
                         }
                         InfoSendType::Identity(name) => {
                             commands.add_component(*e, HoverName { name, radius: 24.0 });
-                            commands.remove_component::<NeedsName>(*e);
-                        }
+                            commands.remove_component::<NeedsName>(*e);}
                     }
                 } else {
                     log::info!(
@@ -69,7 +69,7 @@ pub fn handle_client_events(
                 chat_messages.add_message(&author, &text);
             }
             ClientEvent::ChallengeReceived(sender) => {
-                log::info!("Challenged to a duel by entity with net id {sender:?}.");
+                notifications.0.push_back(super::OverworldNotification::ReceivedChallenge(sender));
             }
         });
 }
